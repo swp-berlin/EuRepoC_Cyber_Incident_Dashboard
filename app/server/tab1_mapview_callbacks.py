@@ -142,7 +142,7 @@ def map_callback(app, df=None, geometry=None):
                 tickmode="array",
                 tickvals=[0, 20, 40, 60, 80, 100, 120, 140],
                 ticktext=["0", "20", "40", "60", "80", "100", "120", ">140"],
-                title="Number of <br> cyber incidents",
+                title="",
             ),
             coloraxis_colorbar_y=-0.2,
             coloraxis_colorbar_x=0,
