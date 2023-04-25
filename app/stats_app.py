@@ -8,7 +8,7 @@ from layout.layout import full_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback
 from server.main_callbacks import reset_button_callback, tab_change_callback
 from server.common_callbacks import clear_selected_click_data_callback, \
-    clear_active_cell_datatables_callback, modal_callback
+    clear_active_cell_datatables_callback
 from server.tab1_inclusion_criteria_callbacks import inclusion_criteria_graph_callback
 from server.tab3_timeline_callbacks import timeline_graph_callback, timeline_title_callback, \
     timeline_datatable_callback, timeline_text_selection_callback
@@ -120,13 +120,6 @@ clear_active_cell_datatables_callback(
     input_component_property="tapNode",
     input_id="cytoscape-graph"
 )
-modal_callback(
-    app,
-    modal_id="modal_network",
-    modal_content_id="modal_network_content",
-    datatable_id="network_datatable",
-    stored_data_id="network_datatable_store"
-)
 
 
 # TAB 3
@@ -145,13 +138,6 @@ clear_active_cell_datatables_callback(
     output_id="timeline_datatable",
     input_component_property="clickData",
     input_id="timeline_graph")
-modal_callback(
-    app,
-    modal_id="modal_timeline",
-    modal_content_id="modal_timeline_content",
-    datatable_id="timeline_datatable",
-    stored_data_id="timeline_datatable_store"
-)
 
 
 # TAB 4
@@ -170,13 +156,6 @@ clear_active_cell_datatables_callback(
     output_id="types_datatable",
     input_component_property="clickData",
     input_id="types_graph")
-modal_callback(
-    app,
-    modal_id="modal_types",
-    modal_content_id="modal_types_content",
-    datatable_id="types_datatable",
-    stored_data_id="types_datatable_store"
-)
 
 
 # TAB 5
@@ -195,13 +174,6 @@ clear_active_cell_datatables_callback(
     output_id="sectors_datatable",
     input_component_property="clickData",
     input_id="sectors_graph")
-modal_callback(
-    app,
-    modal_id="modal_sectors",
-    modal_content_id="modal_sectors_content",
-    datatable_id="sectors_datatable",
-    stored_data_id="sectors_datatable_store"
-)
 
 
 server = app.server
@@ -209,4 +181,4 @@ app.layout = full_layout
 
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", port=8050)
+    app.run_server(host="0.0.0.0", port=8050, debug=True)

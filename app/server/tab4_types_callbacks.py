@@ -1,9 +1,10 @@
 from dash import html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.express as px
 from dash import callback_context as ctx
-from server.server_functions import filter_database_by_output
+from server.server_functions import filter_database_by_output, filter_datatable
+from server.common_callbacks import create_modal_text
 
 
 def types_title_callback(app):
@@ -40,7 +41,7 @@ def types_title_callback(app):
             )
 
 
-#types_data
+# types_data
 def types_graph_callback(app, df=None, states_codes=None):
     @app.callback(
         Output('types_graph', 'figure'),
@@ -90,18 +91,17 @@ def types_graph_callback(app, df=None, states_codes=None):
                                  html.Span(f" ({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity).")])
         else:
             key_text = html.Div([
-               html.P([
-                   html.Span(f"{max_type_freq}", style={"font-weight": "bold"}),
-                   html.Span(" is the most frequent type of incident for the selected options "),
-                   html.Span(f"({grouped_data['ID'].max()} incidents)"),
-                   html.Span(", while "), html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
-                   html.Span(
-                       " is the most intense "),
-                   html.Span(f"({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity). But "),
-                   html.Span(f"{max_type_combined}", style={"font-weight": "bold"}),
-                   html.Span(" incidents combine high frequency and high intensity.")
-               ])
-           ])
+                html.P([
+                    html.Span(f"{max_type_freq}", style={"font-weight": "bold"}),
+                    html.Span(" is the most frequent type of incident for the selected options "),
+                    html.Span(f"({grouped_data['ID'].max()} incidents)"),
+                    html.Span(", while "), html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
+                    html.Span(" is the most intense "),
+                    html.Span(f"({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity). But "),
+                    html.Span(f"{max_type_combined}", style={"font-weight": "bold"}),
+                    html.Span(" incidents combine high frequency and high intensity.")
+                ])
+            ])
 
         fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
                          size="bubble_size", size_max=60,
@@ -129,10 +129,10 @@ def types_graph_callback(app, df=None, states_codes=None):
                             yanchor="bottom",
                             y=-0.29,
                             ),
-                            font=dict(
-                                family="sans-serif",
-                                color="#002C38",
-                            ),
+                          font=dict(
+                              family="sans-serif",
+                              color="#002C38",
+                          ),
                           xaxis=dict(
                               range=[0, grouped_data['ID'].max() + grouped_data['ID'].max()*0.1],
                           ),
@@ -159,22 +159,28 @@ def types_graph_callback(app, df=None, states_codes=None):
 
         return fig, key_text
 
+
 def types_datatable_callback(app, df=None, states_codes=None):
     @app.callback(
         Output(component_id='types_datatable', component_property='data'),
         Output(component_id='types_datatable', component_property='tooltip_data'),
-        Output(component_id="types_datatable_store", component_property="data"),
+        Output(component_id="modal_types", component_property='is_open'),
+        Output(component_id="modal_types_content", component_property='children'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
-        Input("types_graph", "clickData")
+        Input(component_id="types_graph", component_property="clickData"),
+        Input(component_id="types_datatable", component_property='active_cell'),
+        Input(component_id="types_datatable", component_property='page_current'),
+        State(component_id="modal_types", component_property="is_open"),
     )
     def update_table(receiver_country_filter,
                      initiator_country_filter,
                      start_date_start,
                      start_date_end,
-                     clickData):
+                     clickData,
+                     active_cell, page_current, is_open):
 
         # Check if start and end dates have changed
         if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
@@ -184,43 +190,15 @@ def types_datatable_callback(app, df=None, states_codes=None):
             clickData = None
 
         # Filter data based on inputs
-        filtered_data = df.copy(deep=True)
-        filtered_data["receiver_country"] = filtered_data["receiver_country"].fillna("").astype(str)
-        filtered_data["initiator_country"] = filtered_data["initiator_country"].fillna("").astype(str)
-        filtered_data["incident_type"] = filtered_data["incident_type"].fillna("").astype(str)
-
-        region_filter = None
-
-        if receiver_country_filter == "Global (states)":
-            receiver_country_filter = None
-            region_filter = None
-        elif "(states)" in receiver_country_filter and receiver_country_filter != "Global (states)":
-            for key in states_codes.keys():
-                if receiver_country_filter == key:
-                    receiver_country_filter = None
-                    region_filter = states_codes[key]
-        elif receiver_country_filter == "EU (member states)":
-            receiver_country_filter = None
-            region_filter = r"\bEU\b|\bEU[;\s]|[;\s]EU[;\s]"
-        elif receiver_country_filter == "NATO (member states)":
-            receiver_country_filter = None
-            region_filter = "NATO"
-        else:
-            receiver_country_filter = receiver_country_filter
-            region_filter = None
-
-        if receiver_country_filter and receiver_country_filter != 'Global (states)':
-            filtered_data = filtered_data[filtered_data['receiver_country'].str.contains(receiver_country_filter)]
-        if region_filter:
-            filtered_data = filtered_data[filtered_data['receiver_region'].str.contains(region_filter, regex=True)]
-        if initiator_country_filter:
-            filtered_data = filtered_data[filtered_data['initiator_country'].str.contains(initiator_country_filter)]
-        if clickData:
-            filtered_data = filtered_data[filtered_data['incident_type'].str.contains(clickData['points'][0]['customdata'][0])]
-        start_date = pd.to_datetime(start_date_start).strftime('%Y-%m-%d')
-        end_date = pd.to_datetime(start_date_end).strftime('%Y-%m-%d')
-        filtered_data = filtered_data[
-            (filtered_data['start_date'] >= start_date) & (filtered_data['start_date'] <= end_date)]
+        filtered_data = filter_datatable(
+            df=df,
+            receiver_country_filter=receiver_country_filter,
+            initiator_country_filter=initiator_country_filter,
+            start_date=start_date_start,
+            end_date=start_date_end,
+            states_codes=states_codes,
+            types_clickdata=clickData,
+        )
 
         # Convert data to pandas DataFrame and format tooltip_data
         data = filtered_data[['name', 'start_date', "weighted_cyber_intensity"]].to_dict('records')
@@ -228,15 +206,20 @@ def types_datatable_callback(app, df=None, states_codes=None):
                          for column, value in row.items()}
                         for row in data]
 
-        return data, tooltip_data, filtered_data.to_dict('records')
+        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
+                                          is_open=is_open)
+
+        return data, tooltip_data, status, modal
+
 
 def types_text_selection_callback(app):
-    @app.callback(Output('types_selected', 'children'),
-                  Input('types_graph', 'clickData'),
-                  Input(component_id='receiver_country_dd', component_property='value'),
-                  Input(component_id='initiator_country_dd', component_property='value'),
-                  Input(component_id='date-picker-range', component_property='start_date'),
-                  Input(component_id='date-picker-range', component_property='end_date')
+    @app.callback(
+        Output('types_selected', 'children'),
+        Input('types_graph', 'clickData'),
+        Input(component_id='receiver_country_dd', component_property='value'),
+        Input(component_id='initiator_country_dd', component_property='value'),
+        Input(component_id='date-picker-range', component_property='start_date'),
+        Input(component_id='date-picker-range', component_property='end_date')
     )
     def display_click_data(
             clickData,

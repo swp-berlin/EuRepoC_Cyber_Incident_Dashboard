@@ -1,9 +1,10 @@
 from dash import html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.express as px
 from dash import callback_context as ctx
-from server.server_functions import filter_database_by_output
+from server.server_functions import filter_database_by_output, filter_datatable
+from server.common_callbacks import create_modal_text
 
 
 def sectors_title_callback(app):
@@ -129,63 +130,49 @@ def sectors_datatable_callback(app, df=None, states_codes=None):
     @app.callback(
         Output(component_id='sectors_datatable', component_property='data'),
         Output(component_id='sectors_datatable', component_property='tooltip_data'),
-        Output(component_id='sectors_datatable_store', component_property='data'),
+        Output(component_id="modal_sectors", component_property='is_open'),
+        Output(component_id="modal_sectors_content", component_property='children'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
-        Input("sectors_graph", "clickData")
+        Input(component_id="sectors_graph", component_property="clickData"),
+        Input(component_id="sectors_datatable", component_property='active_cell'),
+        Input(component_id="sectors_datatable", component_property='page_current'),
+        State(component_id="modal_sectors", component_property="is_open"),
     )
     def update_table(receiver_country_filter,
                      initiator_country_filter,
                      start_date_start,
                      start_date_end,
-                     graph_targets):
+                     graph_targets,
+                     active_cell,
+                     page_current,
+                     is_open):
+        # Check if start and end dates have changed
+        if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
+                or ctx.triggered[0]['prop_id'] == 'date-picker-range.end_date' \
+                or ctx.triggered[0]['prop_id'] == 'initiator_country_dd.value' \
+                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value':
+            graph_targets = None
 
-        # Filter data based on inputs
-        filtered_data = df.copy(deep=True)
-
-        region_filter = None
-
-        if receiver_country_filter == "Global (states)":
-            receiver_country_filter = None
-            region_filter = None
-        elif "(states)" in receiver_country_filter and receiver_country_filter != "Global (states)":
-            for key in states_codes.keys():
-                if receiver_country_filter == key:
-                    receiver_country_filter = None
-                    region_filter = states_codes[key]
-        elif receiver_country_filter == "EU (member states)":
-            receiver_country_filter = None
-            region_filter = r"\bEU\b|\bEU[;\s]|[;\s]EU[;\s]"
-        elif receiver_country_filter == "NATO (member states)":
-            receiver_country_filter = None
-            region_filter = "NATO"
-        else:
-            receiver_country_filter = receiver_country_filter
-            region_filter = None
-
-        if receiver_country_filter and receiver_country_filter != 'Global (states)':
-            filtered_data = filtered_data[filtered_data['receiver_country'].str.contains(receiver_country_filter)]
-        if region_filter:
-            filtered_data = filtered_data[filtered_data['receiver_region'].str.contains(region_filter, regex=True)]
-        if initiator_country_filter:
-            filtered_data = filtered_data[filtered_data['initiator_country'].str.contains(initiator_country_filter)]
-        if graph_targets:
-            point = graph_targets["points"][0]["label"]
-            filtered_data = filtered_data[
-                filtered_data['receiver_category'].str.contains(point) | filtered_data[
-                    'receiver_category_subcode'].str.contains(point)
-                ]
-        start_date = pd.to_datetime(start_date_start).strftime('%Y-%m-%d')
-        end_date = pd.to_datetime(start_date_end).strftime('%Y-%m-%d')
-        filtered_data = filtered_data[
-            (filtered_data['start_date'] >= start_date) & (filtered_data['start_date'] <= end_date)]
+        filtered_data = filter_datatable(
+            df=df,
+            receiver_country_filter=receiver_country_filter,
+            initiator_country_filter=initiator_country_filter,
+            start_date=start_date_start,
+            end_date=start_date_end,
+            states_codes=states_codes,
+            targets_clickdata=graph_targets,
+        )
 
         # Convert data to pandas DataFrame and format tooltip_data
         data = filtered_data[['name', 'start_date', "incident_type"]].to_dict('records')
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()}
-                         for row in data]
+                        for row in data]
 
-        return data, tooltip_data, filtered_data.to_dict('records')
+        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
+                                          is_open=is_open)
+
+        return data, tooltip_data, status, modal

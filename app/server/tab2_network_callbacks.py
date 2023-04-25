@@ -1,6 +1,7 @@
 from dash import html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash import callback_context as ctx
+from server.common_callbacks import create_modal_text
 import pandas as pd
 import numpy as np
 import pickle
@@ -373,13 +374,17 @@ def network_datatable_callback(app, df=None):
     @app.callback(
         Output('network_datatable', 'data'),
         Output('network_datatable', 'tooltip_data'),
-        Output("network_datatable_store", "data"),
+        Output("modal_network", 'is_open'),
+        Output("modal_network_content", 'children'),
         Input('cytoscape-graph', 'tapNode'),
         Input('receiver_country_dd', 'value'),
-        Input("nodes_graph", "data")
+        Input("nodes_graph", "data"),
+        Input("network_datatable", 'active_cell'),
+        Input("network_datatable", 'page_current'),
+        State("modal_network", "is_open"),
     )
     # DataTable
-    def update_table(node, receiver_country_filter, nodes_present):
+    def update_table(node, receiver_country_filter, nodes_present, active_cell, page_current, is_open):
         # Filter data based on inputs
         copied_data = df.copy(deep=True)
         copied_data['receiver_country'] = copied_data['receiver_country'].fillna('')
@@ -389,8 +394,10 @@ def network_datatable_callback(app, df=None):
             match_regex = '|'.join(nodes_present)
             filtered_data = copied_data[copied_data['receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
             if node:
-                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data['receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
-                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data['initiator_country'].str.contains(match_regex, flags=re.IGNORECASE)]
+                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data[
+                    'receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
+                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data[
+                    'initiator_country'].str.contains(match_regex, flags=re.IGNORECASE)]
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
         else:
@@ -400,8 +407,10 @@ def network_datatable_callback(app, df=None):
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
             elif node and node['data']['id'] != receiver_country_filter:
-                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data['receiver_country'].str.contains(receiver_country_filter)]
-                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data['initiator_country'].str.contains(receiver_country_filter)]
+                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data[
+                    'receiver_country'].str.contains(receiver_country_filter)]
+                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data[
+                    'initiator_country'].str.contains(receiver_country_filter)]
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
             else:
@@ -418,4 +427,7 @@ def network_datatable_callback(app, df=None):
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()} for row in data]
 
-        return data, tooltip_data, filtered_data.to_dict('records')
+        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
+                                          is_open=is_open)
+
+        return data, tooltip_data, status, modal
