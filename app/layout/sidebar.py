@@ -63,6 +63,24 @@ sidebar = dbc.Card([
                      value="Global (states)",
                      clearable=False),
         html.Div(
+            id='incident_type_dd_div',
+            children=[
+                *make_break(1),
+                html.Label(html.B('Incident type')),
+                dcc.Dropdown(
+                    id='incident_type_dd',
+                    options=[
+                         "Data theft",
+                         "Data theft & Doxing",
+                         "Disruption",
+                         "Hijacking with Misuse",
+                         "Hijacking without Misuse",
+                         "Ransomware"
+                    ]
+                ),
+            ]
+        ),
+        html.Div(
             id='date-picker-range-div',
             children=[
                 *make_break(1),
@@ -72,6 +90,27 @@ sidebar = dbc.Card([
                     min_date_allowed=date(2000, 1, 1),
                     max_date_allowed=date(today.year, today.month, today.day),
                     start_date=date(2000, 1, 1),
+                    end_date=date(today.year, today.month, today.day),
+                    display_format='D/M/YYYY',
+                    style={'width': '100%',
+                           'color': 'rgb(0, 44, 56)',
+                           'font-family': 'var(--bs-font-sans-serif)',
+                           'text-align': 'left'
+                           },
+                    className="dash-bootstrap",
+                ),
+            ]
+        ),
+        html.Div(
+            id='date-picker-range-div_attributions',
+            children=[
+                *make_break(1),
+                html.Label(html.B('Date of cyber incidents')),
+                dcc.DatePickerRange(
+                    id='date-picker-range_attributions',
+                    min_date_allowed=date(2010, 1, 1),
+                    max_date_allowed=date(today.year, today.month, today.day),
+                    start_date=date(2010, 1, 1),
                     end_date=date(today.year, today.month, today.day),
                     display_format='D/M/YYYY',
                     style={'width': '100%',
@@ -93,5 +132,6 @@ sidebar = dbc.Card([
                 style={'width': '100%'}
             )
         ], style={'margin-top': '20px'}),
+        *make_break(1),
     ]),
 ], className="h-100")

@@ -4,7 +4,7 @@ from layout.layout_functions import create_table
 
 
 modal_timeline = dbc.Modal([
-    dbc.ModalHeader('Incident details'),
+    dbc.ModalHeader(html.H3('Incident details')),
     dbc.ModalBody(id='modal_timeline_content'),
 ], id='modal_timeline', size='lg')
 

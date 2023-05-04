@@ -61,11 +61,13 @@ def map_callback(app, df=None, geometry=None):
         Output(component_id='map', component_property='figure'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
+        Input(component_id='incident_type_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
     )
     def update_plot(input_receiver_country,
                     input_initiator_country,
+                    input_incident_type,
                     start_date_start,
                     start_date_end):
 
@@ -79,6 +81,7 @@ def map_callback(app, df=None, geometry=None):
         input_filters = {
             'filter_column': input_receiver_country,
             'initiator_country': input_initiator_country,
+            'incident_type': input_incident_type,
         }
 
         # Filter the data based on input dates and filters
@@ -95,7 +98,7 @@ def map_callback(app, df=None, geometry=None):
             average_intensity = 0
             number_of_groups = 0
             grouped_df = filtered_df.drop(
-                columns=["start_date", "initiator_country", "initiator_name", "weighted_cyber_intensity"]).reset_index()
+                columns=["start_date", "initiator_country", "initiator_name", "incident_type", "weighted_cyber_intensity"]).reset_index()
             grouped_df = grouped_df.set_index("ISO_A3")
             grouped_df["ID"] = 0
             if len(grouped_df) > 1:
@@ -113,11 +116,18 @@ def map_callback(app, df=None, geometry=None):
         grouped_df = grouped_df.merge(geometry, on="ISO_A3")
         grouped_gdf = gpd.GeoDataFrame(grouped_df, geometry=grouped_df.geometry)
 
+        if input_receiver_country == "Global (states)":
+            nb_incidents = copied_data['ID'].nunique() - 1
+
         # Define the map center and zoom level
         if any(text in input_receiver_country for text in ['(states)', '(member states)', '(region)', '(insitutions)']):
             map_latitude = 65
             map_longitude = 0
-            map_zoom = 0.1
+            map_zoom = 0.3
+        elif input_receiver_country == "United States":
+            map_latitude = grouped_gdf.latitude.max()
+            map_longitude = grouped_gdf.longitude.max()
+            map_zoom = 1.3
         else:
             map_latitude = grouped_gdf.latitude.max()
             map_longitude = grouped_gdf.longitude.max()
@@ -152,7 +162,7 @@ def map_callback(app, df=None, geometry=None):
         )
         fig.update_layout(mapbox={
             "zoom": map_zoom,
-            "center": {"lat": map_latitude, "lon": map_longitude}
+            "center": {"lat": map_latitude, "lon": map_longitude},
         })
 
         return nb_incidents, average_intensity, number_of_groups, fig

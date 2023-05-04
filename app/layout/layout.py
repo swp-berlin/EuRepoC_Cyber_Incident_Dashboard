@@ -9,20 +9,20 @@ card_tabs = dbc.Row([
         dbc.Tabs(
             [
                 dbc.Tab(label="Map view", tab_id="tab-1", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Who attacks whom", tab_id="tab-2", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Conflict dyads", tab_id="tab-2", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Timeline", tab_id="tab-3", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Incident types", tab_id="tab-4", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Targeted sectors", tab_id="tab-5", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Initiator types", tab_id="tab-6", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Conflict issues", tab_id="tab-7", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Attributions", tab_id="tab-8", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Attributions", tab_id="tab-6", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Legal", tab_id="tab-7", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Initiator types", tab_id="tab-8", tab_style={"marginRight": "auto"}),
             ],
             id="card-tabs",
             active_tab="tab-1",
         ),
         html.Div(id="card-content"),
-    ]),
-])
+    ], xxl=12, xl=12, lg=12, md=12, sm=12, xs=12),
+], style={"margin": "15px 0px 0px 0px"})
 
 
 full_layout = dbc.Container(

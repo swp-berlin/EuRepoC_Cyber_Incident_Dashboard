@@ -12,7 +12,7 @@
  * Copyright 2011-2022 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
  */
-@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap");
+@import url("https://fonts.googleapis.com/css?family=Lato&display=swap");
 :root {
   --bs-blue: #3459e6;
   --bs-indigo: #6610f2;
@@ -57,7 +57,7 @@
   --bs-black-rgb: 0, 0, 0;
   --bs-body-color-rgb: 73, 80, 87;
   --bs-body-bg-rgb: 255, 255, 255;
-  --bs-font-sans-serif: "Source Sans Pro", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --bs-font-sans-serif: "Lato", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --bs-font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
   --bs-body-font-family: var(--bs-font-sans-serif);
@@ -3026,7 +3026,7 @@ textarea.form-control-lg {
 
 .btn-light {
   --bs-btn-color: #000;
-  --bs-btn-bg: rgba(0, 44, 56, 0.05);
+  --bs-btn-bg: rgb(230, 234 ,235);
   --bs-btn-border-color: #f8f9fa;
   --bs-btn-hover-color: #000;
   --bs-btn-hover-bg: #d3d4d5;
@@ -4324,7 +4324,7 @@ textarea.form-control-lg {
   padding-left: 12px;
   margin-bottom: 0;
   color: var(--bs-card-cap-color);
-  background-color: rgba(0, 44, 56, 0.05);
+  background-color: rgb(230, 234, 235);
   border-bottom: var(--bs-card-border-width) solid var(--bs-card-border-color);
 }
 .card-header:first-child {
@@ -4431,7 +4431,7 @@ textarea.form-control-lg {
   --bs-accordion-color: #002C38;
   --bs-accordion-bg: #fff;
   --bs-accordion-transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, border-radius 0.15s ease;
-  --bs-accordion-border-color: #dee2e6;
+  --bs-accordion-border-color: #e6eaeb;
   --bs-accordion-border-width: 1px;
   --bs-accordion-border-radius: 0.375rem;
   --bs-accordion-inner-border-radius: calc(0.375rem - 1px);
@@ -4449,7 +4449,7 @@ textarea.form-control-lg {
   --bs-accordion-body-padding-x: 1.25rem;
   --bs-accordion-body-padding-y: 1rem;
   --bs-accordion-active-color: #002C38;
-  --bs-accordion-active-bg: rgba(0, 44, 56, 0.1);
+  --bs-accordion-active-bg: rgb(230, 234, 235);
 }
 
 .accordion-button {

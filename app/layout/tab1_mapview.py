@@ -63,11 +63,10 @@ map_tab = dbc.Row([
             html.P([
                 "The map displays all incidents recorded in the database for your selected initiator and \
                 target countries and timeframe. Please note that our database only covers incidents that have \
-                a political dimension. Note that as of 01/02/2023, the EuRepoC database directly captures \
-                cyber incidents affecting critical infrastructure targets. This includes incidents that have not \
-                (yet) been politicized and cases for which no political motivation and/or a political affiliation \
-                of the attacker(s) has been reported. The graph below shows our inclusion criteria along with the \
-                number of incidents corrsponding to each inclusion criteria."
+                a political dimension. This includes incidents that have not (yet) been politicized and cases for \
+                which no political motivation and/or a political affiliation of the attacker(s) has been reported. \
+                The graph below shows our inclusion criteria along with the number of incidents corresponding to \
+                each inclusion criteria."
             ]),
         ]),
     ]),

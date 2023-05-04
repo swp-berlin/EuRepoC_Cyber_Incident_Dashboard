@@ -117,33 +117,43 @@ def types_graph_callback(app, df=None, states_codes=None):
 
         fig.update_layout(xaxis_title="Number of incidents",
                           yaxis_title="Average intensity",
-                          legend_title="Incident type",
+                          legend_title="",
                           hovermode='closest',
                           hoverlabel=dict(
                                 bgcolor="#002C38",
-                                font_size=12,
-                                font_family="sans-serif",
+                                font_family="Lato",
                             ),
                           legend=dict(
                             orientation="h",
                             yanchor="bottom",
-                            y=-0.29,
+                            y=-0.4,
                             ),
                           font=dict(
-                              family="sans-serif",
+                              family="Lato",
                               color="#002C38",
+                              size=14
                           ),
                           xaxis=dict(
                               range=[0, grouped_data['ID'].max() + grouped_data['ID'].max()*0.1],
+                              gridcolor='rgba(0, 0, 0, 0.1)',
+                              zerolinecolor='rgba(0, 44, 56, 0.5)',
+                              zerolinewidth=0.5,
+                              showline=True,
+                              linecolor='rgba(0, 44, 56, 0.5)',
+                              linewidth=0.5,
                           ),
                           yaxis=dict(
                               range=[0, None],
+                              gridcolor='rgba(0, 0, 0, 0.1)',
+                              showline=True,
+                              linecolor='rgba(0, 44, 56, 0.5)',
+                              linewidth=0.5,
                           ),
                           margin=dict(l=0, r=0, t=25, b=0, pad=0),
-                          plot_bgcolor='rgba (0, 44, 56, 0.05)',
+                          plot_bgcolor='white',
                           )
 
-        fig.add_shape(type='line',
+        """fig.add_shape(type='line',
                       x0=grouped_data['ID'].median(),
                       y0=grouped_data['weighted_cyber_intensity'].min(),
                       x1=grouped_data['ID'].median(),
@@ -155,12 +165,12 @@ def types_graph_callback(app, df=None, states_codes=None):
                       y0=grouped_data['weighted_cyber_intensity'].median(),
                       x1=grouped_data['ID'].max(),
                       y1=grouped_data['weighted_cyber_intensity'].median(),
-                      line=dict(color='lightgrey', width=2, dash='dot'))
+                      line=dict(color='lightgrey', width=2, dash='dot'))"""
 
         return fig, key_text
 
 
-def types_datatable_callback(app, df=None, states_codes=None):
+def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, index=None):
     @app.callback(
         Output(component_id='types_datatable', component_property='data'),
         Output(component_id='types_datatable', component_property='tooltip_data'),
@@ -171,6 +181,7 @@ def types_datatable_callback(app, df=None, states_codes=None):
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
         Input(component_id="types_graph", component_property="clickData"),
+        Input(component_id="types_datatable", component_property="derived_virtual_data"),
         Input(component_id="types_datatable", component_property='active_cell'),
         Input(component_id="types_datatable", component_property='page_current'),
         State(component_id="modal_types", component_property="is_open"),
@@ -180,7 +191,10 @@ def types_datatable_callback(app, df=None, states_codes=None):
                      start_date_start,
                      start_date_end,
                      clickData,
-                     active_cell, page_current, is_open):
+                     derived_virtual_data,
+                     active_cell,
+                     page_current,
+                     is_open):
 
         # Check if start and end dates have changed
         if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
@@ -200,14 +214,22 @@ def types_datatable_callback(app, df=None, states_codes=None):
             types_clickdata=clickData,
         )
 
+        filtered_data["start_date"] = filtered_data["start_date"].dt.strftime("%Y-%m-%d")
+
         # Convert data to pandas DataFrame and format tooltip_data
-        data = filtered_data[['name', 'start_date', "weighted_cyber_intensity"]].to_dict('records')
+        data = filtered_data[['ID', 'name', 'start_date', "weighted_cyber_intensity"]].to_dict('records')
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()}
                         for row in data]
 
-        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
-                                          is_open=is_open)
+        status, modal = create_modal_text(
+            data=data_dict,
+            index=index,
+            derived_virtual_data=derived_virtual_data,
+            active_cell=active_cell,
+            page_current=page_current,
+            is_open=is_open
+        )
 
         return data, tooltip_data, status, modal
 

@@ -16,15 +16,15 @@ def construct_details(edge_type, node, text):
     if len(edge_type) > 0:
         for edge in edge_type:
             list_items = html.Ul([
-                html.Li("Number of attacks: " + str(edge["nb_incidents"])),
+                html.Li("Number of incidents: " + str(edge["nb_incidents"])),
                 html.Li("Average cyber intensity: " + str(edge["cyber_intensity"])),
-                html.Li("Main attack group: " + str(edge["initiator_name"])),
-                html.Li("Main type of attackers: " + str(edge["initiator_category"])),
+                html.Li("Main threat group: " + str(edge["initiator_name"])),
+                html.Li("Main type of initiators: " + str(edge["initiator_category"])),
                 html.Li(f"Main cyber issue: {edge['cyber_conflict_issue']}"),
             ])
 
         node_details = html.Div([
-            html.B(f"Attacks {text} {node['data']['id']}"),
+            html.B(f"Incidents {text} {node['data']['id']}"),
             list_items
         ], style={'padding-top': '10px'})
 
@@ -40,7 +40,7 @@ def network_title_callback(app):
         else:
             return html.Div([
                 html.B(
-                    f"Main countries attacking {receiver_country} and attacked by {receiver_country} across all incicents"
+                    f"Main countries of origin of incidents against {receiver_country} and main countries targeted by initators in {receiver_country}"
                 )
             ])
 
@@ -68,7 +68,7 @@ def network_graph_callback(app, df=None, states_codes=None):
                     head = 25
         elif receiver_country == "EU (member states)":
             receiver_country = None
-            region_filter = r"\bEU\b|\bEU[,\s]|[,\s]EU[,\s]"
+            region_filter = "EU\(MS\)"
             head = 25
         elif receiver_country == "NATO (member states)":
             receiver_country = None
@@ -204,7 +204,7 @@ def style_node_onclick_callback(app):
             if selected_country == "Global (states)":
                 title_card = html.B(f"Main conflict dyads")
             else:
-                title_card = html.B(f"Attacks towards and from {selected_country}")
+                title_card = html.B(f"Incidents against and from {selected_country}")
 
             no_node_stylesheet = [
                 {
@@ -214,13 +214,14 @@ def style_node_onclick_callback(app):
                         'background-color': '#002C38',
                         'width': '30px',
                         'height': '30px',
+                        'font-family': 'Lato',
                     }
                 },
                 {
                     'selector': 'edge',
                     'style': {
-                        'line-color': '#CCD8CC',
-                        'target-arrow-color': '#CCD8CC',
+                        'line-color': 'rgb(230, 234, 235)',
+                        'target-arrow-color': 'rgb(230, 234, 235)',
                         'arrow-shape': 'triangle',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
@@ -232,15 +233,15 @@ def style_node_onclick_callback(app):
                 {
                     "selector": 'edge[source = "{}"]'.format(selected_country),
                     "style": {
-                        'line-color': '#89BD9E',
-                        'target-arrow-color': '#89BD9E',
+                        'line-color': '#335660',
+                        'target-arrow-color': '#335660',
                     }
                 },
                 {
                     "selector": 'edge[target = "{}"]'.format(selected_country),
                     "style": {
-                        'line-color': '#847E89',
-                        'target-arrow-color': '#847E89',
+                        'line-color': '#d63459',
+                        'target-arrow-color': '#d63459',
                     }
                 },
             ]
@@ -255,13 +256,14 @@ def style_node_onclick_callback(app):
                     'background-color': '#002C38',
                     'width': '30px',
                     'height': '30px',
+                    'font-family': 'Lato',
                 }
             },
             {
                 'selector': 'edge',
                 'style': {
-                    'line-color': '#CCD8CC',
-                    'target-arrow-color': '#CCD8CC',
+                    'line-color': 'rgb(230, 234, 235)',
+                    'target-arrow-color': 'rgb(230, 234, 235)',
                     'arrow-shape': 'triangle',
                     'target-arrow-shape': 'triangle',
                     'curve-style': 'bezier',
@@ -280,12 +282,12 @@ def style_node_onclick_callback(app):
 
         edge_colors = {
             "source": {
-                "line-color": "#89BD9E",
-                "target-arrow-color": "#89BD9E",
+                "line-color": "#335660",
+                "target-arrow-color": "#335660",
             },
             "target": {
-                "line-color": "#847E89",
-                "target-arrow-color": "#847E89",
+                "line-color": "#d63459",
+                "target-arrow-color": "#d63459",
             },
         }
 
@@ -309,11 +311,11 @@ def style_node_onclick_callback(app):
             if len(edges_for_selected_target) > 0:
                 list_items = html.Ul([
                     html.Li(
-                        edge["source"] + ": " + str(edge["nb_incidents"]) + " attacks",
+                        edge["source"] + ": " + str(edge["nb_incidents"]) + " incidents",
                         style={"margin": "0.2rem 0"})for edge in edges_for_selected_target])
 
                 node_details_1 = html.Div([
-                    html.B("Main attackers"),
+                    html.B("Main country of origin of incidents"),
                     list_items
                 ], style={'padding-top': '10px'})
 
@@ -321,11 +323,11 @@ def style_node_onclick_callback(app):
             if len(edges_for_selected_source) > 0:
                 list_items = html.Ul([
                     html.Li(
-                        edge["target"] + ": " + str(edge["nb_incidents"]) + " attacks",
+                        edge["target"] + ": " + str(edge["nb_incidents"]) + " incidents",
                         style={"margin": "0.2rem 0"}) for edge in edges_for_selected_source])
 
                 node_details_2 = html.Div([
-                    html.B("Main targets"),
+                    html.B("Main countries targeted by national initiators"),
                     list_items
                 ], style={'padding-top': '10px'})
 
@@ -370,7 +372,7 @@ def network_text_selection_callback(app):
         return text
 
 
-def network_datatable_callback(app, df=None):
+def network_datatable_callback(app, df=None, data_dict=None, index=None):
     @app.callback(
         Output('network_datatable', 'data'),
         Output('network_datatable', 'tooltip_data'),
@@ -379,14 +381,16 @@ def network_datatable_callback(app, df=None):
         Input('cytoscape-graph', 'tapNode'),
         Input('receiver_country_dd', 'value'),
         Input("nodes_graph", "data"),
+        Input("network_datatable", "derived_virtual_data"),
         Input("network_datatable", 'active_cell'),
         Input("network_datatable", 'page_current'),
         State("modal_network", "is_open"),
     )
     # DataTable
-    def update_table(node, receiver_country_filter, nodes_present, active_cell, page_current, is_open):
+    def update_table(node, receiver_country_filter, nodes_present, derived_virtual_data, active_cell, page_current, is_open):
         # Filter data based on inputs
         copied_data = df.copy(deep=True)
+        copied_data['start_date'] = copied_data['start_date'].dt.date
         copied_data['receiver_country'] = copied_data['receiver_country'].fillna('')
         copied_data['initiator_country'] = copied_data['initiator_country'].fillna('')
 
@@ -421,13 +425,22 @@ def network_datatable_callback(app, df=None):
 
         # Convert data to pandas DataFrame and format tooltip_data
         data = filtered_data[
-            ['name', 'start_date', "initiator_country", "initiator_category", "receiver_country", "incident_type"]
+            ['ID', 'name', 'start_date', "initiator_country", "initiator_category", "receiver_country", "incident_type"]
         ].to_dict('records')
 
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()} for row in data]
 
-        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
-                                          is_open=is_open)
+        #filtered_data = filtered_data.fillna("Not available")
+        #filtered_data["attribution_date"] = filtered_data["attribution_date"].replace(" 00:00:00","")
+
+        status, modal = create_modal_text(
+            data=data_dict,
+            index=index,
+            derived_virtual_data=derived_virtual_data,
+            active_cell=active_cell,
+            page_current=page_current,
+            is_open=is_open
+        )
 
         return data, tooltip_data, status, modal

@@ -4,7 +4,7 @@ from layout.layout_functions import create_table
 
 
 modal_sectors = dbc.Modal([
-    dbc.ModalHeader('Incident details'),
+    dbc.ModalHeader(html.H3('Incident details')),
     dbc.ModalBody(id='modal_sectors_content'),
 ], id='modal_sectors', size='lg')
 

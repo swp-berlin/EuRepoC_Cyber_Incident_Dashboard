@@ -1,6 +1,7 @@
 from dash import html
 from dash.dependencies import Input, Output, State
 import pandas as pd
+from datetime import datetime
 import plotly.graph_objects as go
 from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable
@@ -12,27 +13,34 @@ def timeline_title_callback(app):
         Output("timeline_text", "children"),
         Input('receiver_country_dd', 'value'),
         Input('initiator_country_dd', 'value'),
+        Input('incident_type_dd', 'value'),
         Input('date-picker-range', 'start_date'),
         Input('date-picker-range', 'end_date'),
     )
     def selection_text_output(receiver_country,
                               initiator_country,
+                              incident_type,
                               start_date_start,
                               start_date_end):
 
         start_date = pd.to_datetime(start_date_start).strftime('%d-%m-%Y')
         end_date = pd.to_datetime(start_date_end).strftime('%d-%m-%Y')
 
+        if incident_type:
+            type = incident_type
+        else:
+            type = "cyber"
+
         if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"Number of cyber incidents from {initiator_country} against {receiver_country} \
+            return html.P(html.B(f"Number of {type} incidents from {initiator_country} against {receiver_country} \
             between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Number of cyber incidents across all countries between {start_date} and {end_date}"))
+            return html.P(html.B(f"Number of {type} incidents across all countries between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"Number of cyber incidents initiated by actors based in {initiator_country} \
+            return html.P(html.B(f"Number of {type} incidents initiated by actors based in {initiator_country} \
             between {start_date} and {end_date}"))
         elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Number of cyber incidents against {receiver_country} \
+            return html.P(html.B(f"Number of {type} incidents against {receiver_country} \
             between {start_date} and {end_date}"))
 
 
@@ -42,11 +50,13 @@ def timeline_graph_callback(app, df=None, states_codes=None):
         Output('timeline_description_text', 'children'),
         Input('receiver_country_dd', 'value'),
         Input('initiator_country_dd', 'value'),
+        Input('incident_type_dd', 'value'),
         Input('date-picker-range', 'start_date'),
         Input('date-picker-range', 'end_date'),
     )
     def update_timeline(input_receiver_country,
                         input_initiator_country,
+                        incident_type,
                         start_date_start,
                         start_date_end):
 
@@ -56,6 +66,7 @@ def timeline_graph_callback(app, df=None, states_codes=None):
             date_end=start_date_end,
             receiver_country=input_receiver_country,
             initiator_country=input_initiator_country,
+            incident_type=incident_type,
             states_codes=states_codes
         )
 
@@ -107,17 +118,29 @@ def timeline_graph_callback(app, df=None, states_codes=None):
                     y=evolution_grouped["Number of incidents"],
                     mode='lines+markers',
                     line=dict(color='#002C38'),
+                    marker=dict(color="#002C38"),
                     name='Number of cyber incidents',
                 ),
             )
 
             overall_evolution_plot.update_layout(
                 showlegend=False,
-                plot_bgcolor='rgba (0, 44, 56, 0.05)',
-                yaxis=dict(range=[0, None]),
-                xaxis=dict(tickformat='%Y', dtick=1),
+                plot_bgcolor='white',
+                yaxis=dict(
+                    rangemode='tozero',
+                    range=[0, None],
+                    gridcolor='rgba(0, 0, 0, 0.1)',
+                    zerolinecolor='rgba(0, 44, 56, 0.5)',
+                    zerolinewidth=0.5,
+                ),
+                xaxis=dict(
+                    type='date',
+                    tickformat='%Y',
+                    gridcolor='rgba(0, 0, 0, 0.1)',
+                ),
                 font=dict(
-                    family="sans-serif",
+                    family="Lato",
+                    size=14,
                     color="#002C38",
                 ),
                 margin=dict(l=0, r=0, t=25, b=0, pad=0),
@@ -165,18 +188,30 @@ def timeline_graph_callback(app, df=None, states_codes=None):
                     y=evolution_grouped["Number of incidents"],
                     mode='lines+markers',
                     line=dict(color='#002C38'),
+                    marker=dict(color="#002C38"),
                     name='Number of cyber incidents',
                 ),
             )
 
             overall_evolution_plot.update_layout(
                 showlegend=False,
-                plot_bgcolor='rgba (0, 44, 56, 0.05)',
-                yaxis=dict(range=[0, None]),
-                xaxis=dict(tickformat='%b-%Y', dtick="M1"),
+                plot_bgcolor='white',
+                yaxis=dict(
+                    rangemode='tozero',
+                    range=[0, None],
+                    gridcolor='rgba(0, 0, 0, 0.1)',
+                    zerolinecolor='rgba(0, 44, 56, 0.5)',
+                    zerolinewidth=0.5,
+                ),
+                xaxis=dict(
+                    tickformat='%b-%Y',
+                    dtick="M1",
+                    gridcolor='rgba(0, 0, 0, 0.1)',
+                ),
                 font=dict(
-                    family="sans-serif",
+                    family="Lato",
                     color="#002C38",
+                    size=14,
                 ),
                 margin=dict(l=0, r=0, t=25, b=0, pad=0),
                 height=400,
@@ -185,7 +220,7 @@ def timeline_graph_callback(app, df=None, states_codes=None):
         return overall_evolution_plot, timeline_description_text
 
 
-def timeline_datatable_callback(app, df=None, states_codes=None):
+def timeline_datatable_callback(app, df=None, states_codes=None, data_dict=None, index=None):
     @app.callback(
         Output(component_id='timeline_datatable', component_property='data'),
         Output(component_id='timeline_datatable', component_property='tooltip_data'),
@@ -193,18 +228,22 @@ def timeline_datatable_callback(app, df=None, states_codes=None):
         Output(component_id="modal_timeline_content", component_property='children'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
+        Input(component_id='incident_type_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
         Input(component_id="timeline_graph", component_property="clickData"),
+        Input(component_id="timeline_datatable", component_property='derived_virtual_data'),
         Input(component_id="timeline_datatable", component_property='active_cell'),
         Input(component_id="timeline_datatable", component_property='page_current'),
         State(component_id="modal_timeline", component_property="is_open"),
     )
     def update_table(receiver_country_filter,
                      initiator_country_filter,
+                     incident_type_filter,
                      start_date_start,
                      start_date_end,
                      clickData,
+                     derived_virtual_data,
                      active_cell,
                      page_current,
                      is_open):
@@ -213,7 +252,8 @@ def timeline_datatable_callback(app, df=None, states_codes=None):
         if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
                 or ctx.triggered[0]['prop_id'] == 'date-picker-range.end_date' \
                 or ctx.triggered[0]['prop_id'] == 'initiator_country_dd.value' \
-                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value':
+                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value' \
+                or ctx.triggered[0]['prop_id'] == 'incident_type_dd.value':
             clickData = None
 
         # Filter data based on inputs
@@ -221,37 +261,46 @@ def timeline_datatable_callback(app, df=None, states_codes=None):
             df=df,
             receiver_country_filter=receiver_country_filter,
             initiator_country_filter=initiator_country_filter,
+            incident_type_filter=incident_type_filter,
             start_date=start_date_start,
             end_date=start_date_end,
             states_codes=states_codes)
 
+        date_range = pd.date_range(start=start_date_start, end=start_date_end)
+
         # Update data further based on clickData
         if clickData:
             point = clickData["points"][0]["x"]
-            if isinstance(point, int):
+            if len(date_range) > 2 * 365:
                 first_day = pd.to_datetime(str(point))
-                last_day = first_day + pd.offsets.YearEnd(0)
+                last_day = pd.to_datetime(f"{first_day.year}-12-31")
                 first_day = first_day.strftime('%Y-%m-%d')
                 last_day = last_day.strftime('%Y-%m-%d')
             else:
                 first_day = pd.to_datetime(str(point))
-                last_day = first_day + pd.offsets.MonthEnd(0)
+                last_day = pd.to_datetime(f"{first_day.year}-{first_day.month}-31")
                 first_day = pd.to_datetime(first_day).strftime('%Y-%m-%d')
                 last_day = pd.to_datetime(last_day).strftime('%Y-%m-%d')
 
-            filtered_data = filtered_data[
-                (filtered_data['start_date'] >= first_day) & (filtered_data['start_date'] <= last_day)]
+            filtered_data = filtered_data.query('start_date >= @first_day and start_date <= @last_day')
 
-            # text = html.P(f'Currently selected: {point}')
+        filtered_data["start_date"] = filtered_data["start_date"].dt.strftime('%Y-%m-%d')
 
         # Convert data to pandas DataFrame and format tooltip_data
-        data = filtered_data[['name', 'start_date', "incident_type"]].to_dict('records')
+        data = filtered_data[['ID', 'name', 'start_date', "incident_type"]].to_dict('records')
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()}
                         for row in data]
 
-        status, modal = create_modal_text(data=filtered_data, active_cell=active_cell, page_current=page_current,
-                                          is_open=is_open)
+
+        status, modal = create_modal_text(
+            data=data_dict,
+            index=index,
+            derived_virtual_data=derived_virtual_data,
+            active_cell=active_cell,
+            page_current=page_current,
+            is_open=is_open
+        )
 
         return data, tooltip_data, status, modal
 
@@ -262,24 +311,34 @@ def timeline_text_selection_callback(app):
         Input(component_id="timeline_graph", component_property="clickData"),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
+        Input(component_id='incident_type_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date')
     )
     def update_table(clickData,
                      receiver_country_filter,
                      initiator_country_filter,
+                     incident_type_filter,
                      start_date_start,
                      start_date_end):
         if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
                 or ctx.triggered[0]['prop_id'] == 'date-picker-range.end_date' \
                 or ctx.triggered[0]['prop_id'] == 'initiator_country_dd.value' \
-                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value':
+                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value' \
+                or ctx.triggered[0]['prop_id'] == 'incident_type_dd.value':
             clickData = None
 
+        # Filter data based on inputs
         if clickData:
+            date_range = pd.date_range(start=start_date_start, end=start_date_end)
+            if len(date_range) > 2 * 365:
+                selected = datetime.strptime(clickData["points"][0]["x"], "%Y-%m-%d").strftime("%Y")
+            else:
+                selected = datetime.strptime(clickData["points"][0]["x"], "%Y-%m-%d").strftime("%b-%Y")
+
             text = html.P([
                 'Current graph selection: incidents in ',
-                html.Span(f'{clickData["points"][0]["x"]}',
+                html.Span(f'{selected}',
                           style={'font-weight': 'bold'})
             ])
         else:

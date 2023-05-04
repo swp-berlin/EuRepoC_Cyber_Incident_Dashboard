@@ -4,6 +4,7 @@ import geopandas as gpd
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
+import pickle
 from layout.layout import full_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback
 from server.main_callbacks import reset_button_callback, tab_change_callback
@@ -18,6 +19,8 @@ from server.tab4_types_callbacks import types_title_callback, types_graph_callba
     types_text_selection_callback, types_datatable_callback
 from server.tab5_sectors_callbacks import sectors_title_callback, sectors_graph_callback, \
     sectors_text_selection_callback, sectors_datatable_callback
+from server.tab6_attributions_callbacks import attributions_title_callback, attributions_graph_callback, \
+    attributions_datatable_callback, attributions_text_selection_callback
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
 # TABLES
@@ -26,6 +29,8 @@ database["start_date"] = pd.to_datetime(database["start_date"])
 database["receiver_region"] = database["receiver_region"].fillna("")
 database["receiver_country"] = database["receiver_country"].fillna("")
 database["initiator_country"] = database["initiator_country"].fillna("")
+full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
+full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
 
 # MAP
 map_data = pd.read_csv("./data/dashboard_map_data.csv")
@@ -58,6 +63,11 @@ sectors_data = pd.read_csv("./data/dashboard_targeted_sectors_data.csv")
 sectors_data["start_date"] = pd.to_datetime(sectors_data["start_date"])
 sectors_data['receiver_category_subcode'] = sectors_data['receiver_category_subcode'].replace(np.nan, "")
 
+# ATTRIBUTIONS
+attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
+attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
+
+
 states_codes = {
     "Asia (states)": "ASIA",
     "Central America (states)": "CENTAM",
@@ -78,7 +88,8 @@ states_codes = {
     "South China Sea (states)": "SCS",
     "Southeast Asia (states)": "SEA",
     "Sub-Saharan Africa (states)": "SSA",
-    "Western Balkans (states)": "WBALKANS"
+    "Western Balkans (states)": "WBALKANS",
+    "Africa (states)": "AFRICA",
 }
 
 
@@ -107,7 +118,12 @@ network_title_callback(app)
 network_graph_callback(app, df=network, states_codes=states_codes)
 style_node_onclick_callback(app)
 network_text_selection_callback(app)
-network_datatable_callback(app, df=database)
+network_datatable_callback(
+    app,
+    df=database,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
 clear_selected_click_data_callback(
     app,
     output_id="cytoscape-graph",
@@ -126,7 +142,13 @@ clear_active_cell_datatables_callback(
 timeline_title_callback(app)
 timeline_graph_callback(app, df=timeline_data, states_codes=states_codes)
 timeline_text_selection_callback(app)
-timeline_datatable_callback(app, df=database, states_codes=states_codes)
+timeline_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
 clear_selected_click_data_callback(
     app,
     output_id="timeline_graph",
@@ -144,7 +166,13 @@ clear_active_cell_datatables_callback(
 types_title_callback(app)
 types_graph_callback(app, df=types_data, states_codes=states_codes)
 types_text_selection_callback(app)
-types_datatable_callback(app, df=database, states_codes=states_codes)
+types_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
 clear_selected_click_data_callback(
     app,
     output_id="types_graph",
@@ -162,7 +190,13 @@ clear_active_cell_datatables_callback(
 sectors_title_callback(app)
 sectors_graph_callback(app, df=sectors_data, states_codes=states_codes)
 sectors_text_selection_callback(app)
-sectors_datatable_callback(app, df=database, states_codes=states_codes)
+sectors_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
 clear_selected_click_data_callback(
     app,
     output_id="sectors_graph",
@@ -176,9 +210,33 @@ clear_active_cell_datatables_callback(
     input_id="sectors_graph")
 
 
+# TAB 6
+attributions_title_callback(app)
+attributions_graph_callback(app, df=attributions_data, states_codes=states_codes)
+attributions_text_selection_callback(app)
+attributions_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+clear_selected_click_data_callback(
+    app,
+    output_id="attributions_graph",
+    output_component_property="clickData",
+    input_id="clear_attributions_click_data"
+)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="attributions_datatable",
+    input_component_property="clickData",
+    input_id="attributions_graph")
+
+
 server = app.server
 app.layout = full_layout
 
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", port=8050, debug=True)
+    app.run_server(host="0.0.0.0", debug=True, port=8051)

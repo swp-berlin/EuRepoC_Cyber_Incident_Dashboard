@@ -9,11 +9,13 @@ def inclusion_criteria_graph_callback(app, df=None, states_codes=None):
         Output('inclusion_graph', 'figure'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
+        Input(component_id='incident_type_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
         Input(component_id='date-picker-range', component_property='end_date'),
     )
     def update_inclusion_graph(receiver_country_filter,
                                initiator_country_filter,
+                               incident_type_filter,
                                start_date_start,
                                start_date_end):
 
@@ -23,6 +25,7 @@ def inclusion_criteria_graph_callback(app, df=None, states_codes=None):
             date_end=start_date_end,
             receiver_country=receiver_country_filter,
             initiator_country=initiator_country_filter,
+            incident_type=incident_type_filter,
             states_codes=states_codes
         )
 
@@ -66,10 +69,11 @@ def inclusion_criteria_graph_callback(app, df=None, states_codes=None):
             xaxis_title="",
             yaxis_title="",
             xaxis=dict(showticklabels=False),
-            plot_bgcolor='rgba (0, 44, 56, 0.05)',
+            plot_bgcolor='white',
             font=dict(
-                family="sans-serif",
+                family="Lato",
                 color="#002C38",
+                size=14
             ),
             margin=dict(l=0, r=0, t=25, b=0, pad=0),
             height=480,

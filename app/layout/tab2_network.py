@@ -39,7 +39,7 @@ modal_network = dbc.Modal([
 network_tab = dbc.Row([
     dbc.Row([
         dbc.Col([
-            html.H3("Who is attacking whom the most?", style={'text-align': 'center'}),
+            html.H3("Which initiator nationalities attack each other the most?", style={'text-align': 'center'}),
         ], style={'margin': '20px'}),
     ]),
 
@@ -58,7 +58,7 @@ network_tab = dbc.Row([
                 },
                 stylesheet=default_stylesheet,
                 minZoom=1,
-                maxZoom=1.5,
+                maxZoom=1.2,
             ),
             dcc.Store(id='nodes_graph'),
         ], sm=12, xs=12, lg=9, xl=9, xxl=9, md=9),

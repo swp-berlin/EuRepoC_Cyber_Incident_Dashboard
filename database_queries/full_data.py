@@ -1,7 +1,9 @@
 from EuRepoC.query_database import query_database, QueryDatabase, get_token
-from EuRepoC.cleaning_functions import clean_incidents
+from EuRepoC.cleaning_functions import clean_incidents, clean_incidents_dict
 from EuRepoC.tables import TablesAll
 import pandas as pd
+import pickle
+import numpy as np
 
 
 TOKEN = get_token("/Users/camille/Sync/PycharmProjects/stats_dashboard/database_queries/API_token.txt")
@@ -28,6 +30,21 @@ all_incidents_clean = all_database_incidents_clean
 for incident in all_tracker_incidents_clean:
     if incident not in all_incidents_clean:
         all_incidents_clean.append(incident)
+
+for incident in all_incidents_clean:
+    for region_list in incident["receiver_region"]:
+        for i, region in enumerate(region_list):
+            if region == "EU":
+                region_list[i] = "EU(MS)"
+
+# Clean data
+all_database_incidents_clean_dict = clean_incidents_dict(all_incidents)
+all_tracker_incidents_clean_dict = clean_incidents_dict(incidents_sent_to_tracker)
+
+all_incidents_clean_dict = all_database_incidents_clean_dict
+for incident in all_tracker_incidents_clean_dict:
+    if incident not in all_incidents_clean_dict:
+        all_incidents_clean_dict.append(incident)
 
 df = pd.DataFrame(all_database_incidents_clean)
 
@@ -71,24 +88,56 @@ def convert_column(x, column_name):
     x[column_name] = x[column_name].apply(to_string)
     return x
 
+
 for col in df.columns:
     convert_column(df, col)
+
+
 
 tables = TablesAll(all_database_incidents_clean)
 tables.get_all_tables()
 
-#This is how to access the tables.
 political_responses = tables.political_responses.copy(deep=True)
 attributions = tables.attributions_full_df.copy(deep=True)
 legal_responses = tables.legal_responses.copy(deep=True)
 
 attributions = attributions.fillna("")
 attributions = attributions.replace("nan", "")
+attributions = attributions.replace(to_replace=';', value=',', regex=True)
+
+
 def replace_nat_with_empty_string(value):
     if pd.isnull(value):
         return ""
     return value
 attributions = attributions.applymap(replace_nat_with_empty_string)
+
+attributions["attribution_basis"] = attributions["attribution_basis"].astype(str)
+
+attributions["attribution_basis_clean"] = attributions["attribution_basis"].apply(
+    lambda x: "Industry attribution" if x == "IT-security community attributes attacker" else x
+)
+attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"].apply(
+    lambda x: "Political attribution" if x in [
+        "Attribution by receiver government / state entity",
+        "Attribution by EU institution/agency",
+        "Attribution by international organization"
+    ] else x
+)
+attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"].apply(
+    lambda x: "Other attribution basis" if x and x in [
+        "Receiver attributes attacker",
+        "Contested attribution",
+        "Media-based attribution"
+    ] else x
+)
+attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"].apply(
+    lambda x: "" if x and x in [
+        "None",
+        "",
+        "Not available"
+    ] else x
+)
 
 attributions_reversed = attributions.groupby("ID").agg(list).reset_index()
 attributions_reversed = attributions_reversed.drop(columns="Settled")
@@ -140,6 +189,7 @@ order_df = df.reindex(
         'attribution_date',
         'attribution_type',
         'attribution_basis',
+        'attribution_basis_clean',
         'attributing_actor',
         'attribution_it_company',
         'attributing_country',
@@ -214,13 +264,78 @@ def remove_empty(x):
 for col in order_df.columns:
     order_df[col] = order_df[col].apply(remove_empty)
 
-order_df = order_df.sort_values(by='added_to_DB', ascending=False)
+order_df = order_df.sort_values(by='added_to_DB', ascending=False).reset_index(drop=True)
 
 order_df.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/eurepoc_dataset.csv", index=False)
 
+
+with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_data_dict.pickle", "wb") as file:
+    pickle.dump(all_incidents_clean_dict, file)
+
+full_data_dict_index_map = {}
+for i in range(len(all_incidents_clean_dict)):
+    full_data_dict_index_map[all_incidents_clean_dict[i]["ID"]] = i
+
+with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_data_dict_index_map.pickle", "wb") as file:
+    pickle.dump(full_data_dict_index_map, file)
+
+
+
 from dash import html
 
-incident = order_df.iloc[14].to_dict()
+incident = order_df.iloc[458].to_dict()
+
+attribution_dates = incident['attribution_date'].split('; ')
+attribution_types = incident['attribution_type'].split('; ')
+attribution_basis = incident['attribution_basis'].split('; ')
+attributing_actors = incident['attributing_actor'].split('; ')
+attribution_it_companies = incident['attribution_it_company'].split('; ')
+attributing_countries = incident['attributing_country'].split('; ')
+attributed_initiators = incident['attributed_initiator'].split('; ')
+attributed_initiator_countries = incident['attributed_initiator_country'].split('; ')
+attributed_initiator_categories = incident['attributed_initiator_category'].split('; ')
+
+def get_attribution_details(
+        attribution_dates,
+        attribution_types,
+        attribution_basis,
+        attributing_actors,
+        attribution_it_companies,
+        attributing_countries,
+        attributed_initiators,
+        attributed_initiator_countries,
+        attributed_initiator_categories
+):
+    attribution_text = []
+    for i in range(len(attribution_dates)):
+        elements = [
+            html.Div([
+                html.P(f"Attribution {i + 1}", style={"font-weight": "bold"}),
+                html.P([html.Span("Attribution date: ", style={"font-weight": "bold"}), f"{attribution_dates[i]}"]),
+                html.P([html.Span("Attribution basis: ", style={"font-weight": "bold"}), f"{attribution_basis[i]}"]),
+                html.P([html.Span("Attribution type: ", style={"font-weight": "bold"}), f"{attribution_types[i]}"]),
+                html.P([html.Span("Attributing actor: ", style={"font-weight": "bold"}), f"{attributing_actors[i]}"]),
+                html.P([html.Span("Attributing country: ", style={"font-weight": "bold"}), f"{attributing_countries[i]}"]),
+                html.P([html.Span("Attributed initiator: ", style={"font-weight": "bold"}), f"{attributed_initiators[i]}"]),
+                html.P([html.Span("Attributed initiator country: ", style={"font-weight": "bold"}), f"{attributed_initiator_countries[i]}"]),
+                html.P([html.Span("Attributed initiator category: ", style={"font-weight": "bold"}), f"{attributed_initiator_categories[i]}"]),
+            ], style={
+                "background-color": "#f3f2f3",
+                "padding": "10px",
+                "margin": "10px",
+                "border-radius": "5px",
+                "box-shadow": "2px 2px 2px #d6d6d6"
+            })
+        ]
+        attribution_text += elements
+    return attribution_text
+
+sources_attribution = incident["sources_attribution"].split('; ')
+
+
+
+
+
 receiver_names = incident["receiver_name"].split('- ')
 receiver_countries = incident['receiver_country'].split('; ')
 receiver_categories = incident['receiver_category'].split('- ')
@@ -228,11 +343,25 @@ receiver_categories = [category.split('; ') for category in receiver_categories]
 receiver_categories_subcodes = incident['receiver_category_subcode'].split('- ')
 receiver_categories_subcodes = [subcode.split('; ') for subcode in receiver_categories_subcodes]
 receivers_text = []
-for i in range(len(receiver_countries)):
+
+receiver_names = incident["receiver_name"].split('- ') if incident["receiver_name"] is not None else ["Unknown"]
+receiver_countries = incident['receiver_country'].split('; ')
+receiver_categories = [category.split('; ') for category in incident['receiver_category'].split('- ')]
+receiver_categories_subcodes = [subcode.split('; ') for subcode in incident['receiver_category_subcode'].split('- ')] if incident['receiver_category_subcode'] and isinstance(incident['receiver_category_subcode'], str) else [[""]]
+
+
+sources_url = incident['sources_url'].split('; ')
+sources_url_text = []
+for source in sources_url:
+    sources_url_text.append(html.A(source, href=source, target="_blank"))
+
+
+
+for incident in all_incidents_clean_dict:
     elements = [
         html.Div([
             f"Receiver {i}",
-            html.P([html.Span("Name: ", style={"font-weight": "bold"}), f"{receiver_names[i]}"]),
+            html.P([html.Span("Name: ", style={"font-weight": "bold"}), f"{incident['name']}"]),
             html.P([html.Span("Country: ", style={"font-weight": "bold"}), f"{receiver_countries[i]}"]),
         ])
     ]
@@ -251,7 +380,10 @@ content = html.Div([
                 html.P([html.Span("Incident Type: ", style={"font-weight": "bold"}), f"{incident['incident_type']}"]),
                 html.P([html.Span("Source Incident Detection Disclosure: ", style={"font-weight": "bold"}), f"{incident['source_incident_detection_disclosure']}"]),
                 html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}), f"{incident['inclusion_criteria']}"]),
-                html.P([html.Span("Sources URL: ", style={"font-weight": "bold"}), f"{incident['sources_url']}"]),
+                html.P([
+                    html.Span("Sources URL: ", style={"font-weight": "bold"}),
+                    html.Span([sources_url_text[i] for i in receivers_text])
+                ]),
                 html.P([html.Span("Added to database: ", style={"font-weight": "bold"}), f"{incident['added_to_DB']}"]),
                 html.P([html.Span("Last updated: ", style={"font-weight": "bold"}), f"{incident['updated_at']}"]),
                 title="Key information about the incident"
@@ -291,27 +423,132 @@ content = html.Div([
     )
 ])
 
+index_map = {}
+for i in range(len(all_incidents_clean_dict)):
+    index_map[all_incidents_clean_dict[i]["ID"]] = i
+
+first_value = all_incidents_clean_dict[index_map[8]]
 
 attr_date = df_reversed["attribution_date"][14].split('; ')
 attr_type = df_reversed["attribution_type"][14].split('; ')
 
+incident = all_incidents_clean_dict[14]
 
-names = df['receiver_name'][933].split('- ')
-names = [name.split('; ') for name in names]
-countries = df['receiver_country'][933].split('; ')
-categories = df['receiver_category'][933].split('- ')
-categories = [category.split('; ') for category in categories]
-subcodes = df['receiver_category_subcode'][933].split('- ')
-subcodes = [subcode.split('; ') for subcode in subcodes]
-
-
-for i in range(len(countries)):
-    for y in range(len(categories[i])):
-        print(f'''\
-        {countries[i]}: {names[i]} - {categories[i]} - {subcodes[i]}''')
-
-
-for i in range(len(names)):
-    for y in range(len(categories[i])):
-        print(f'''\
-        {countries[i]}: {names[i]} - {categories[i][y]} - {subcodes[i][y]}''')
+content = html.Div([
+    dbc.Accordion(
+        [
+            dbc.AccordionItem(
+                [html.P([html.Span("Name of incident: ", style={"font-weight": "bold"}),
+                         f"{incident['name']}"]),
+                 html.P([html.Span("Description: ", style={"font-weight": "bold"}),
+                         f"{incident['description']}"]),
+                 html.P([html.Span("Start Date: ", style={"font-weight": "bold"}),
+                         f"{incident['start_date']}"]),
+                 html.P([html.Span("End Date: ", style={"font-weight": "bold"}), f"{incident['end_date']}"]),
+                 html.P([html.Span("Incident Type: ", style={"font-weight": "bold"}),
+                         f"{'; '.join(incident['incident_type'])}"]),
+                 html.P([html.Span("Source Incident Detection Disclosure: ", style={"font-weight": "bold"}),
+                         f"{'; '.join(incident['source_incident_detection_disclosure'])}"]),
+                 html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}),
+                         f"{'<br>'.join(incident['inclusion_criteria'])}"]),
+                 html.P([
+                     html.Span("Sources URL: ", style={"font-weight": "bold"}),
+                     html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
+                 ]),
+                 html.P([html.Span("Added to database: ", style={"font-weight": "bold"}),
+                         f"{incident['added_to_DB']}"]),
+                 html.P([html.Span("Last updated: ", style={"font-weight": "bold"}),
+                         f"{incident['updated_at']}"])],
+                title="Key information about the incident"
+            ),
+            dbc.AccordionItem(
+                [receivers_text[i] for i in range(len(receivers_text))],
+                title="Receiver(s)"
+            ),
+            dbc.AccordionItem(
+                [html.P([html.Span(f"Initiator Country: ", style={"font-weight": "bold"}),
+                         f"{incident['initiator_country']}"]),
+                 html.P([html.Span(f"Initiator Category: ", style={"font-weight": "bold"}),
+                         f"{incident['initiator_category']}"]),
+                 html.P([html.Span(f"Initiator Category Subcode: ", style={"font-weight": "bold"}),
+                         f"{incident['initiator_category_subcode']}"])],
+                title="Initator(s)"
+            ),
+            dbc.AccordionItem(
+                [attribution_text[i] for i in range(len(attribution_text))],
+                title="Attribution(s)"
+            ),
+            dbc.AccordionItem(
+                [html.P([html.Span("Impact indicator: ", style={"font-weight": "bold"}),
+                         f"{incident['impact_indicator']} - {incident['impact_indicator_value']}"]),
+                 html.P([html.Span("Functional impact: ", style={"font-weight": "bold"}),
+                         f"{incident['functional_impact']}"]),
+                 html.P([html.Span("Intelligence impact: ", style={"font-weight": "bold"}),
+                         f"{incident['intelligence_impact']}"]),
+                 html.P([html.Span("Political impact (Affected entities): ", style={"font-weight": "bold"}),
+                         f"{incident['political_impact_affected_entities']}"]),
+                 html.P([html.Span("Political impact (Third countries): ", style={"font-weight": "bold"}),
+                         f"{incident['political_impact_third_countries']}"]),
+                 html.P([html.Span("Economic impact: ", style={"font-weight": "bold"}),
+                         f"{incident['economic_impact']}"])],
+                title="Impact Indicator"
+            ),
+            dbc.AccordionItem(
+                [html.P(
+                    [html.Span("Data theft: ", style={"font-weight": "bold"}), f"{incident['data_theft']}"]),
+                    html.P(
+                        [html.Span("Disruption: ", style={"font-weight": "bold"}),
+                         f"{incident['disruption']}"]),
+                    html.P(
+                        [html.Span("Hijacking: ", style={"font-weight": "bold"}), f"{incident['hijacking']}"]),
+                    html.P([html.Span("Physical effects (Temporal): ", style={"font-weight": "bold"}),
+                            f"{incident['physical_effects_temporal']}"]),
+                    html.P([html.Span("Physical effects (Spatial): ", style={"font-weight": "bold"}),
+                            f"{incident['physical_effects_spatial']}"]),
+                    html.P([html.Span("Unweighted Cyber Intensity: ", style={"font-weight": "bold"}),
+                            f"{incident['unweighted_cyber_intensity']}"]),
+                    html.P([html.Span("Target/Effect multiplier: ", style={"font-weight": "bold"}),
+                            f"{incident['target_multiplier']}"]),
+                    html.P([html.Span("Weighted Cyber Intensity: ", style={"font-weight": "bold"}),
+                            f"{incident['weighted_cyber_intensity']}"]),
+                    html.P([html.Span("MITRE-Initial Access: ", style={"font-weight": "bold"}),
+                            f"{incident['MITRE_initial_access']}"]),
+                    html.P([html.Span("MITRE-Impact: ", style={"font-weight": "bold"}),
+                            f"{incident['MITRE_impact']}"]),
+                    html.P([html.Span("Common Vulnerability Scoring System-User Interaction: ",
+                                      style={"font-weight": "bold"}), f"{incident['user_interaction']}"]),
+                    html.P(
+                        [html.Span("Zero day: ", style={"font-weight": "bold"}), f"{incident['zero_days']}"])],
+                title="Technical Categories"
+            ),
+            dbc.AccordionItem(
+                [html.P([html.Span("Cyber conflict issue: ", style={"font-weight": "bold"}),
+                         f"{incident['cyber_conflict_issue']}"]),
+                 html.P([html.Span("Offline conflict issue: ", style={"font-weight": "bold"}),
+                         f"{incident['offline_conflict_issue']}"]),
+                 html.P([html.Span("Offline conflict name: ", style={"font-weight": "bold"}),
+                         f"{incident['offline_conflict_issue_subcode']}"]),
+                 html.P([html.Span("Online conflict intensity: ", style={"font-weight": "bold"}),
+                         f"{incident['offline_conflict_intensity']}"]),
+                 html.P([html.Span("Offline conflict intensity score: ", style={"font-weight": "bold"}),
+                         f"{incident['offline_conflict_intensity_subcode']}"]),
+                 html.P(
+                     [html.Span("Casualties: ", style={"font-weight": "bold"}), f"{incident['casualties']}"]),
+                 html.P([html.Span("Number of political responses: ", style={"font-weight": "bold"}),
+                         f"{incident['number_of_political_responses']}"])],
+                title="Political Categories"
+            ),
+            dbc.AccordionItem(
+                [html.P([html.Span("State Responsibility Indicator: ", style={"font-weight": "bold"}),
+                         f"{incident['state_responsibility_indicator']}"]),
+                 html.P([html.Span("IL Breach Indicator: ", style={"font-weight": "bold"}),
+                         f"{incident['IL_breach_indicator']}"]),
+                 html.P([html.Span("Evidence for Sanctions Indicator: ", style={"font-weight": "bold"}),
+                         f"{incident['evidence_for_sanctions_indicator']}"]),
+                 html.P([html.Span("Number of legal responses: ", style={"font-weight": "bold"}),
+                         f"{incident['number_of_legal_responses']}"])],
+                title="Legal Categories"
+            ),
+        ], start_collapsed=True,
+    )
+])

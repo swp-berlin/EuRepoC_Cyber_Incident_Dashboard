@@ -1,5 +1,87 @@
 from dash import html, dash_table
+import json
 
+column_names = [
+    'ID',
+    'name',
+    'description',
+    'start_date',
+    'end_date',
+    'inclusion_criteria',
+    'inclusion_criteria_subcode',
+    'source_incident_detection_disclosure',
+    'incident_type',
+    'receiver_name',
+    'receiver_country',
+    'receiver_region',
+    'receiver_category',
+    'receiver_category_subcode',
+    'initiator_name',
+    'initiator_country',
+    'initiator_category',
+    'initiator_category_subcode',
+    'number_of_attributions',
+    'attribution_ID',
+    'attribution_date',
+    'attribution_type',
+    'attribution_basis',
+    'attribution_basis_clean',
+    'attributing_actor',
+    'attribution_it_company',
+    'attributing_country',
+    'attributed_initiator',
+    'attributed_initiator_country',
+    'attributed_initiator_category',
+    'sources_attribution',
+    'cyber_conflict_issue',
+    'offline_conflict_issue',
+    'offline_conflict_issue_subcode',
+    'offline_conflict_intensity',
+    'offline_conflict_intensity_subcode',
+    'number_of_political_responses',
+    'political_response_date',
+    'political_response_type',
+    'political_response_type_subcode',
+    'political_response_country',
+    'political_response_actor',
+    'zero_days', 'zero_days_subcode',
+    'MITRE_initial_access',
+    'MITRE_impact',
+    'user_interaction',
+    'has_disruption',
+    'data_theft',
+    'disruption',
+    'hijacking',
+    'physical_effects_spatial',
+    'physical_effects_temporal',
+    'unweighted_cyber_intensity',
+    'target_multiplier',
+    'weighted_cyber_intensity',
+    'impact_indicator',
+    'impact_indicator_value',
+    'functional_impact',
+    'intelligence_impact',
+    'political_impact_affected_entities',
+    'political_impact_third_countries',
+    'economic_impact',
+    'state_responsibility_indicator',
+    'IL_breach_indicator',
+    'IL_breach_indicator_subcode',
+    'evidence_for_sanctions_indicator',
+    'number_of_legal_responses',
+    'legal_response_date',
+    'legal_response_type',
+    'legal_response_type_subcode',
+    'legal_response_country',
+    'legal_response_actor',
+    'legal_attribution_reference',
+    'legal_attribution_reference_subcode',
+    'legal_response_indicator',
+    'casualties',
+    'sources_url',
+    'added_to_DB',
+    'updated_at'
+]
 
 def make_break(num_breaks):
     br_list = [html.Br()] * num_breaks
@@ -7,14 +89,17 @@ def make_break(num_breaks):
 
 
 def create_table(table_id=None, column_name="incident_type", column_label="Incident type"):
+    initial_columns = ['name', 'start_date', column_name]
     datatable = dash_table.DataTable(
         id=table_id,
         data=[],
         columns=[
+            {'name': 'ID', 'id': 'ID'},
             {'name': 'Name (click an incident to display more info)', 'id': 'name'},
             {'name': 'Start date', 'id': 'start_date'},
-            {"name": column_label, 'id': column_name}
+            {"name": column_label, 'id': column_name,},
         ],
+        hidden_columns=["ID"],
         sort_action="native",
         sort_mode="multi",
         page_action="native",
@@ -24,28 +109,47 @@ def create_table(table_id=None, column_name="incident_type", column_label="Incid
             'whiteSpace': 'nowrap',
             'overflow': 'hidden',
             'textOverflow': 'ellipsis',
-            'maxWidth': 0
+            'maxWidth': 0,
+            'padding': '8px',
         },
         tooltip_data=[],
         tooltip_duration=None,
         style_data={
             'color': 'black',
-            'backgroundColor': 'white',
-            'font-family': 'var(--bs-font-sans-serif)'
+            #'backgroundColor': 'rgb(230, 234, 235)',
+            'font-family': 'var(--bs-font-sans-serif)',
+            'border': '0.5px solid var(--bs-border-color-translucent)',
         },
         style_data_conditional=[
+            #{
+                #'if': {'row_index': 'odd'},
+               # 'backgroundColor': 'rgb(204, 213, 215)',
+            #}
             {
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgba(220, 220, 220, 0.3)',
-            }
+                'if': {'state': 'active'},
+                'backgroundColor': '#f5ccd6',
+                'border': '1px solid #cc0130'
+            },
         ],
         style_header={
-            'backgroundColor': 'rgb(210, 210, 210)',
+            'backgroundColor': 'rgb(230, 234, 235)',
             'color': 'black',
             'fontWeight': 'bold',
             'textAlign': 'left',
-            'font-family': 'var(--bs-font-sans-serif)'
-
-        }
+            'font-family': 'var(--bs-font-sans-serif)',
+            'border': '0.5px solid var(--bs-border-color-translucent)',
+        },
+        #style_as_list_view=True,
+        css=[
+            {
+                'selector': '.dbc .previous-page:hover, .first-page:hover, .next-page:hover',
+                'rule': 'color: #cc0130 !important;'
+            },
+            {
+                'selector': '.dbc .previous-next-container .last-page:hover',
+                'rule': 'color: #cc0130 !important;'
+            },
+            {"selector": ".show-hide", "rule": "display: none"}
+        ],
     )
     return datatable
