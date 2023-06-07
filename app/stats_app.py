@@ -1,12 +1,13 @@
-from dash import Dash
+from dash import Dash, Output, Input
 import pandas as pd
 import geopandas as gpd
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
+from datetime import date
 from layout.layout import full_layout
-from server.tab1_mapview_callbacks import map_callback, map_title_callback
+from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
 from server.main_callbacks import reset_button_callback, tab_change_callback
 from server.common_callbacks import clear_selected_click_data_callback, \
     clear_active_cell_datatables_callback
@@ -21,52 +22,86 @@ from server.tab5_sectors_callbacks import sectors_title_callback, sectors_graph_
     sectors_text_selection_callback, sectors_datatable_callback
 from server.tab6_attributions_callbacks import attributions_title_callback, attributions_graph_callback, \
     attributions_datatable_callback, attributions_text_selection_callback
+from server.tab7_responses_callbacks import responses_title_callback, responses_graph_callback, responses_datatable_callback
+from server.tab8_initiators_callbacks import initiators_title_callback, initiators_graph_callback, \
+    initiators_text_selection_callback, initiators_datatable_callback
+from apscheduler.schedulers.background import BackgroundScheduler
+from pytz import timezone
+
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
-# TABLES
-database = pd.read_csv("./data/eurepoc_dataset.csv")
-database["start_date"] = pd.to_datetime(database["start_date"])
-database["receiver_region"] = database["receiver_region"].fillna("")
-database["receiver_country"] = database["receiver_country"].fillna("")
-database["initiator_country"] = database["initiator_country"].fillna("")
-full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
-full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
 
-# MAP
-map_data = pd.read_csv("./data/dashboard_map_data.csv")
-map_data["weighted_cyber_intensity"] = pd.to_numeric(map_data["weighted_cyber_intensity"])
-map_data["start_date"] = pd.to_datetime(map_data["start_date"])
+def global_update():
+    global today, database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
+    timeline_data, types_data, sectors_data, attributions_data, responses_data, initiators_data
 
-# Map geometry
-geometry = gpd.read_file('./data/geojson.json')
+    today = date.today()
 
-# INCLUSION CRITERIA
-inclusion_data = pd.read_csv("./data/dashboard_inclusion_data.csv")
-inclusion_data["start_date"] = pd.to_datetime(inclusion_data["start_date"])
-inclusion_data["receiver_region"] = inclusion_data["receiver_region"].fillna("")
+    # TABLES
+    database = pd.read_csv("./data/eurepoc_dataset.csv")
+    database["start_date"] = pd.to_datetime(database["start_date"])
+    database["receiver_region"] = database["receiver_region"].fillna("")
+    database["receiver_country"] = database["receiver_country"].fillna("")
+    database["initiator_country"] = database["initiator_country"].fillna("")
+    full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
+    full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
 
-# NETWORK
+    # MAP
+    map_data = pd.read_csv("./data/dashboard_map_data.csv")
+    map_data["weighted_cyber_intensity"] = pd.to_numeric(map_data["weighted_cyber_intensity"])
+    map_data["start_date"] = pd.to_datetime(map_data["start_date"])
+
+    # Map geometry
+    geometry = gpd.read_file('./data/geojson.json')
+
+    # INCLUSION CRITERIA
+    inclusion_data = pd.read_csv("./data/dashboard_inclusion_data.csv")
+    inclusion_data["start_date"] = pd.to_datetime(inclusion_data["start_date"])
+    inclusion_data["receiver_region"] = inclusion_data["receiver_region"].fillna("")
+
+    # NETWORK
+    network = pd.read_csv("./data/dashboard_network_data.csv")
+    network["receiver_region"] = network["receiver_region"].fillna("")
+
+    # TIMELINE
+    timeline_data = pd.read_csv("./data/dashboard_evolution_data.csv")
+    timeline_data["start_date"] = pd.to_datetime(timeline_data["start_date"])
+
+    # INCIDENT TYPES
+    types_data = pd.read_csv("./data/dashboard_incident_types_data.csv")
+    types_data["start_date"] = pd.to_datetime(types_data["start_date"])
+
+    # TARGETED SECTORS
+    sectors_data = pd.read_csv("./data/dashboard_targeted_sectors_data.csv")
+    sectors_data["start_date"] = pd.to_datetime(sectors_data["start_date"])
+    sectors_data['receiver_category_subcode'] = sectors_data['receiver_category_subcode'].replace(np.nan, "")
+
+    # ATTRIBUTIONS
+    attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
+    attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
+
+    # RESPONSES
+    responses_data = pd.read_csv("./data/dashboard_responses_data.csv")
+    responses_data["start_date"] = pd.to_datetime(responses_data["start_date"])
+
+    # INITIATORS
+    initiators_data = pd.read_csv("./data/dashboard_initiators_data.csv")
+    initiators_data["start_date"] = pd.to_datetime(initiators_data["start_date"])
+
+global_update()
+
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+scheduler.add_job(
+    func=global_update,
+    trigger="cron",
+    hour=13,
+    minute=0,
+    timezone=timezone("UTC")
+)
+
 cyto.load_extra_layouts()
-network = pd.read_csv("./data/dashboard_network_data.csv")
-network["receiver_region"] = network["receiver_region"].fillna("")
-
-# TIMELINE
-timeline_data = pd.read_csv("./data/dashboard_evolution_data.csv")
-timeline_data["start_date"] = pd.to_datetime(timeline_data["start_date"])
-
-# INCIDENT TYPES
-types_data = pd.read_csv("./data/dashboard_incident_types_data.csv")
-types_data["start_date"] = pd.to_datetime(types_data["start_date"])
-
-# TARGETED SECTORS
-sectors_data = pd.read_csv("./data/dashboard_targeted_sectors_data.csv")
-sectors_data["start_date"] = pd.to_datetime(sectors_data["start_date"])
-sectors_data['receiver_category_subcode'] = sectors_data['receiver_category_subcode'].replace(np.nan, "")
-
-# ATTRIBUTIONS
-attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
-attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
-
 
 states_codes = {
     "Asia (states)": "ASIA",
@@ -106,12 +141,73 @@ app = Dash(
 reset_button_callback(app)
 tab_change_callback(app)
 
+@app.callback(
+    Output('metric_values', 'data'),
+    Input(component_id='receiver_country_dd', component_property='value'),
+    Input(component_id='initiator_country_dd', component_property='value'),
+    Input(component_id='incident_type_dd', component_property='value'),
+    Input(component_id='date-picker-range', component_property='start_date'),
+    Input(component_id='date-picker-range', component_property='end_date')
+)
+def update_plot(input_receiver_country,
+                input_initiator_country,
+                input_incident_type,
+                start_date_start,
+                start_date_end):
+
+    # Ensure the DataFrame is not overwritten
+    copied_data = map_data.copy(deep=True)
+
+    # Convert input dates to datetime
+    date_range = pd.date_range(start=start_date_start, end=start_date_end)
+
+    if input_initiator_country == "All countries":
+        input_initiator_country = None
+    if input_incident_type == "All":
+        input_incident_type = None
+
+    # Define input filters in dictionary
+    input_filters = {
+        'filter_column': input_receiver_country,
+        'initiator_country': input_initiator_country,
+        'incident_type': input_incident_type,
+    }
+
+    # Filter the data based on input dates and filters
+    filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
+
+    for col, val in input_filters.items():
+        if val is not None:
+            filtered_df = filtered_df.loc[filtered_df[col] == val]
+
+    # If the filtered DataFrame is empty indicate 0 incidents and empty map which still shows the selected country
+    if filtered_df.empty:
+        nb_incidents = 0
+        average_intensity = 0
+    else:
+        nb_incidents = filtered_df['ID'].nunique()
+        average_intensity = round(filtered_df['weighted_cyber_intensity'].mean(), 1)
+
+    if input_receiver_country == "Global (states)" \
+            and input_initiator_country is None \
+            and input_incident_type is None \
+            and start_date_start == "2000-01-01" \
+            and start_date_end == today.strftime(format="%Y-%m-%d"):
+        nb_incidents = copied_data['ID'].nunique() - 1
+
+    metric_values = {
+        'nb_incidents': nb_incidents,
+        'average_intensity': average_intensity
+    }
+
+    return metric_values
+
 
 # TAB 1
 map_title_callback(app)
 map_callback(app, df=map_data, geometry=geometry)
 inclusion_criteria_graph_callback(app, df=inclusion_data, states_codes=states_codes)
-
+metric_values_callback(app)
 
 # TAB 2
 network_title_callback(app)
@@ -122,7 +218,8 @@ network_datatable_callback(
     app,
     df=database,
     data_dict=full_data_dict,
-    index=full_data_dict_index_map
+    index=full_data_dict_index_map,
+    states_codes=states_codes
 )
 clear_selected_click_data_callback(
     app,
@@ -136,7 +233,6 @@ clear_active_cell_datatables_callback(
     input_component_property="tapNode",
     input_id="cytoscape-graph"
 )
-
 
 # TAB 3
 timeline_title_callback(app)
@@ -234,9 +330,49 @@ clear_active_cell_datatables_callback(
     input_id="attributions_graph")
 
 
+# TAB 3
+responses_title_callback(app)
+responses_graph_callback(app, df=responses_data, states_codes=states_codes)
+responses_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="responses_datatable",
+    input_component_property="clickData",
+    input_id="responses_graph")
+
+
+# TAB 8
+initiators_title_callback(app)
+initiators_graph_callback(app, df=initiators_data, states_codes=states_codes)
+initiators_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+initiators_text_selection_callback(app)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="initiators_datatable",
+    input_component_property="clickData",
+    input_id="initiators_graph")
+clear_selected_click_data_callback(
+    app,
+    output_id="initiators_graph",
+    output_component_property="clickData",
+    input_id="clear_initiator_click_data"
+)
+
 server = app.server
 app.layout = full_layout
 
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", debug=True, port=8051)
+    app.run_server(host="0.0.0.0")

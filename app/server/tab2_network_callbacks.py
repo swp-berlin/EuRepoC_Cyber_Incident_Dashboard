@@ -196,7 +196,13 @@ def style_node_onclick_callback(app):
         if not node:
             empty_card = html.Div([
                 html.P(
-                    html.I("Click on a country (circle) to see details"),
+                    html.I(
+                        "This network graph provides a visual overview of the main cyber conflict dyads, showing \
+                        country pairs with high levels of cyber interactions. A thicker arrow signifies a higher \
+                        quantity and intensity of cyber incidents. The direction of the arrow shows \
+                        the trajectory of the incidents from the country of origin of the initiators to the country of \
+                        the receivers."
+                    ),
                     style={"text-align": "center", "vertical-align": "middle"}
                 ),
             ], style={'padding-top': '10px', 'padding-bottom': '2px'})
@@ -303,7 +309,7 @@ def style_node_onclick_callback(app):
         edges_for_selected_target = [edge for edge in node["edgesData"] if edge["target"] == node["data"]["id"]]
         edges_for_selected_source = [edge for edge in node["edgesData"] if edge["source"] == node["data"]["id"]]
 
-        if selected_country == "Global (states)" or selected_country == node['data']['id']:
+        if "states)" in selected_country or selected_country == node['data']['id']:
 
             title_card = html.B(f"{node['data']['id']}")
 
@@ -327,7 +333,7 @@ def style_node_onclick_callback(app):
                         style={"margin": "0.2rem 0"}) for edge in edges_for_selected_source])
 
                 node_details_2 = html.Div([
-                    html.B("Main countries targeted by national initiators"),
+                    html.B("Main countries targeted"),
                     list_items
                 ], style={'padding-top': '10px'})
 
@@ -362,17 +368,24 @@ def network_text_selection_callback(app):
             clickData = None
 
         if clickData:
-            text = html.P([
-                'Selected data point: ',
+            text = html.Span([
+                'Selected country: ',
+                html.Br(),
                 html.Span(f"{clickData['data']['flag']}",
-                          style={'font-weight': 'bold'})
+                          style={'font-weight': 'bold', 'font-size': '25px'}),
             ])
         else:
-            text = html.P(f'No data point selected', style={'font-style': 'italic'})
+            text = html.P([
+                html.I(
+                    className="fa-solid fa-arrow-pointer",
+                    style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
+                ),
+                ' Click on a node in the graph to see corresponding incidents in the table below'
+            ], style={'font-style': 'italic'})
         return text
 
 
-def network_datatable_callback(app, df=None, data_dict=None, index=None):
+def network_datatable_callback(app, df=None, data_dict=None, index=None, states_codes=None):
     @app.callback(
         Output('network_datatable', 'data'),
         Output('network_datatable', 'tooltip_data'),
@@ -394,7 +407,36 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None):
         copied_data['receiver_country'] = copied_data['receiver_country'].fillna('')
         copied_data['initiator_country'] = copied_data['initiator_country'].fillna('')
 
-        if receiver_country_filter == 'Global (states)':
+        region_filter = None
+
+        if receiver_country_filter == "Global (states)":
+            region_filter = None
+        elif "(states)" in receiver_country_filter and receiver_country_filter != "Global (states)":
+            for key in states_codes.keys():
+                if receiver_country_filter == key:
+                    receiver_country_filter = None
+                    region_filter = states_codes[key]
+        elif receiver_country_filter == "EU (member states)":
+            receiver_country_filter = None
+            region_filter = "EU\(MS\)"
+        elif receiver_country_filter == "NATO (member states)":
+            receiver_country_filter = None
+            region_filter = "NATO"
+        else:
+            receiver_country_filter = receiver_country_filter
+            region_filter = None
+
+        if region_filter:
+            filtered_data = copied_data[copied_data['receiver_region'].str.contains(region_filter, flags=re.IGNORECASE)]
+            if node:
+                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data[
+                    'receiver_region'].str.contains(region_filter, flags=re.IGNORECASE)]
+                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data[
+                    'receiver_region'].str.contains(region_filter, flags=re.IGNORECASE)]
+                filtered_data = pd.concat([received, initiated])
+                filtered_data = filtered_data.drop_duplicates()
+
+        elif receiver_country_filter == 'Global (states)':
             match_regex = '|'.join(nodes_present)
             filtered_data = copied_data[copied_data['receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
             if node:
@@ -406,20 +448,20 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None):
                 filtered_data = filtered_data.drop_duplicates()
         else:
             if node and node['data']['id'] == receiver_country_filter:
-                received = copied_data[copied_data['receiver_country'].str.contains(receiver_country_filter)]
-                initiated = copied_data[copied_data['initiator_country'].str.contains(receiver_country_filter)]
+                received = copied_data[copied_data['receiver_country'].str.contains(receiver_country_filter, regex=False)]
+                initiated = copied_data[copied_data['initiator_country'].str.contains(receiver_country_filter, regex=False)]
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
             elif node and node['data']['id'] != receiver_country_filter:
-                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data[
-                    'receiver_country'].str.contains(receiver_country_filter)]
-                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id']) & copied_data[
-                    'initiator_country'].str.contains(receiver_country_filter)]
+                received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id'], regex=False) & copied_data[
+                    'receiver_country'].str.contains(receiver_country_filter, regex=False)]
+                initiated = copied_data[copied_data['receiver_country'].str.contains(node['data']['id'], regex=False) & copied_data[
+                    'initiator_country'].str.contains(receiver_country_filter, regex=False)]
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
             else:
-                received = copied_data[copied_data['receiver_country'].str.contains(receiver_country_filter)]
-                initiated = copied_data[copied_data['initiator_country'].str.contains(receiver_country_filter)]
+                received = copied_data[copied_data['receiver_country'].str.contains(receiver_country_filter, regex=False)]
+                initiated = copied_data[copied_data['initiator_country'].str.contains(receiver_country_filter, regex=False)]
                 filtered_data = pd.concat([received, initiated])
                 filtered_data = filtered_data.drop_duplicates()
 

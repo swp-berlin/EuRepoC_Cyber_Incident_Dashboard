@@ -30,6 +30,17 @@ for incident in all_tracker_incidents_clean:
     if incident not in all_incidents_clean:
         all_incidents_clean.append(incident)
 
+for incident in all_incidents_clean:
+    for i in range(len(incident["receiver_country"])):
+        if incident["receiver_country"][i] == "EU (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+            incident["receiver_country"][i] = "EU (institutions)"
+
+
+for incident in all_incidents_clean:
+    for i in range(len(incident["receiver_country"])):
+        if incident["receiver_country"][i] == "NATO (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+            incident["receiver_country"][i] = "NATO (institutions)"
+
 # Create tables
 tables = TablesAll(all_incidents_clean)
 tables.get_all_tables()
@@ -63,6 +74,19 @@ initiator_country = tables.initiator_country.copy(deep=True)
 initiator_name = tables.initiator_name.copy(deep=True)
 weighted_cyber_intensity = tables.weighted_cyber_intensity.copy(deep=True)
 incident_types = tables.incident_type.copy(deep=True)
+
+initiator_types = tables.initiator_category.copy(deep=True)
+initiator_types_data = start_date.merge(receiver_country, how="outer", on="ID")
+initiator_types_data = initiator_types_data.merge(incident_types, how="outer", on="ID")
+initiator_types_data = initiator_types_data.merge(initiator_country, how="outer", on="ID")
+initiator_types_data = initiator_types_data.merge(initiator_types, how="outer", on="ID")
+initiator_types_data = initiator_types_data.merge(initiator_name, how="outer", on="ID")
+initiator_types_data = initiator_types_data.drop_duplicates()
+initiator_types_data = initiator_types_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
+initiator_types_data["receiver_region"] = initiator_types_data["receiver_region"].astype(str)
+initiator_types_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_initiators_data.csv", index=False)
+
+#top5_initiators = initiator_name_grouped.groupby('initiator_category').apply(lambda x: x.nlargest(5, 'ID')).reset_index(drop=True)
 
 # merge data
 merged_data = receiver_country.merge(start_date, how="outer", on="ID")
@@ -158,17 +182,20 @@ inclusion_full_data["receiver_region"] = inclusion_full_data["receiver_region"].
 inclusion_full_data["inclusion_criteria"] = inclusion_full_data["inclusion_criteria"].str.strip()  # Remove extra whitespaces
 
 inclusion_full_data["inclusion_criteria"].replace({
-    "Attack on (inter alia) political target(s), not politicized": "Attack on political target(s), not politicized",
-    "Attack conducted by non-state group / non-state actor with political goals (religious, ethnic, etc. groups) / undefined actor with political goals": "Attack conducted by non-state group/actor with political goals",
-    "Attack conducted by nation state (generic “state-attribution” or direct attribution towards specific state-entities, e.g., intelligence agencies)": "Attack conducted by nation state",
-    "Attack on (inter alia) political target(s), politicized": "Attack on political target(s), politicized",
+    "Attack on (inter alia) political target(s), not politicized": "Non politicised attack<br>on political target(s)",
+    "Attack conducted by non-state group / non-state actor with political goals (religious, ethnic, etc. groups) / undefined actor with political goals": "Attack conducted by<br>non-state actors with political goals",
+    "Attack conducted by nation state (generic “state-attribution” or direct attribution towards specific state-entities, e.g., intelligence agencies)": "Attack conducted by<br>a nation state",
+    "Attack on (inter alia) political target(s), politicized": "Politicised attack<br>on political target(s)",
+    "Attack on critical infrastructure target(s)": "Attack on<br>critical infrastructure target(s)",
+    "Attack on non-political target(s), politicized": "Politicised attack<br>on non-political target(s)",
+
 }, inplace=True)
 
 # Drop NaN values if present
 inclusion_full_data.dropna(subset=["inclusion_criteria"], inplace=True)
 
 inclusion_full_data["inclusion_criteria_subcode"].replace({
-    "Attack conducted by a state-affiliated group (includes state-sanctioned, state-supported, state-controlled but officially non-state actors) (“cyber-proxies”) / a group that is generally attributed as state-affiliated ": "Attack conducted by a state-affiliated group (“cyber-proxies”)",
+    "Attack conducted by a state-affiliated group (includes state-sanctioned, state-supported, state-controlled but officially non-state actors) (“cyber-proxies”) / a group that is generally attributed as state-affiliated ": "Attack conducted by<br>a state-affiliated group",
 }, inplace=True)
 
 # Drop NaN values if present
@@ -337,3 +364,46 @@ attribution_basis_df_merged["average_overall"] = attribution_basis_df_merged["av
 
 attribution_basis_df_merged.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_attributions_data.csv", index=False)
 
+pol = tables.political_responses.copy(deep=True)
+pol_graph_data = pol.merge(start_date, on='ID', how='outer')
+pol_graph_data = pol_graph_data.merge(receiver_country, on='ID', how='outer')
+pol_graph_data = pol_graph_data.merge(initiator_country, on='ID', how='outer')
+pol_graph_data = pol_graph_data.merge(incident_types, on='ID', how='outer')
+pol_graph_data = pol_graph_data.drop_duplicates()
+pol_graph_data = pol_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
+pol_graph_data["receiver_region"] = pol_graph_data["receiver_region"].astype(str)
+
+
+legal = tables.legal_responses.copy(deep=True)
+legal_graph_data = legal.merge(start_date, on='ID', how='outer')
+legal_graph_data = legal_graph_data.merge(receiver_country, on='ID', how='outer')
+legal_graph_data = legal_graph_data.merge(initiator_country, on='ID', how='outer')
+legal_graph_data = legal_graph_data.merge(incident_types, on='ID', how='outer')
+legal_graph_data = legal_graph_data.drop_duplicates()
+legal_graph_data = legal_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
+legal_graph_data["receiver_region"] = legal_graph_data["receiver_region"].astype(str)
+
+
+nb_pol = tables.number_of_political_responses.copy(deep=True)
+nb_pol["political_response"] = np.where(nb_pol["number_of_political_responses"] > 0, "Yes", "No")
+nb_pol = nb_pol.drop(columns=['number_of_political_responses'])
+nb_leg = tables.number_of_legal_responses.copy(deep=True)
+nb_leg["legal_response"] = np.where(nb_leg["number_of_legal_responses"] > 0, "Yes", "No")
+nb_leg = nb_leg.drop(columns=['number_of_legal_responses'])
+responses = nb_pol.merge(nb_leg, on="ID", how="outer")
+responses = responses.merge(weighted_cyber_intensity, on="ID", how="outer")
+
+responses["political_response"] = responses["political_response"].apply(lambda x: 1 if x == "Yes" else 0)
+responses["legal_response"] = responses["legal_response"].apply(lambda x: 1 if x == "Yes" else 0)
+responses["response"] = responses["political_response"] + responses["legal_response"]
+responses["response"] = responses["response"].apply(lambda x: 1 if x > 0 else 0)
+
+responses_graph_data = responses.merge(start_date, on='ID', how='outer')
+responses_graph_data = responses_graph_data.merge(receiver_country, on='ID', how='outer')
+responses_graph_data = responses_graph_data.merge(initiator_country, on='ID', how='outer')
+responses_graph_data = responses_graph_data.merge(incident_types, on='ID', how='outer')
+responses_graph_data = responses_graph_data.drop_duplicates()
+responses_graph_data = responses_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
+responses_graph_data["receiver_region"] = responses_graph_data["receiver_region"].astype(str)
+
+responses_graph_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_responses_data.csv", index=False)

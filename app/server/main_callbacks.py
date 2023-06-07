@@ -5,6 +5,8 @@ from layout.tab3_timeline import timeline_tab
 from layout.tab4_types import types_tab
 from layout.tab5_sectors import sectors_tab
 from layout.tab6_attributions import attributions_tab
+from layout.tab7_responses import responses_tab
+from layout.tab8_initiator_types import initiators_tab
 from datetime import date
 
 
@@ -60,6 +62,6 @@ def tab_change_callback(app):
         elif active_tab == "tab-6":
             return attributions_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-7":
-            return "This is tab {}".format(active_tab), {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return responses_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
         elif active_tab == "tab-8":
-            return "This is tab {}".format(active_tab), {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return initiators_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}

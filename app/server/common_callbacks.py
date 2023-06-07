@@ -1,4 +1,6 @@
 from dash import html
+from dash.exceptions import PreventUpdate
+from dash import callback_context as ctx
 from dash.dependencies import Input, Output, State
 import dash_bootstrap_components as dbc
 import pandas as pd
@@ -7,9 +9,36 @@ import pandas as pd
 def clear_selected_click_data_callback(app, output_id=None, output_component_property=None, input_id=None):
     @app.callback(
         Output(output_id, output_component_property),
-        Input(input_id, "n_clicks")
+        Input(input_id, "n_clicks"),
+        Input('receiver_country_dd', 'value'),
+        Input('initiator_country_dd', 'value'),
+        Input('incident_type_dd', 'value'),
+        Input('date-picker-range', 'start_date'),
+        Input('date-picker-range', 'end_date'),
     )
-    def clear_click_data(n_clicks):
+    def clear_click_data(
+            n_clicks,
+            receiver_country_filter,
+            initiator_country_filter,
+            incident_type_filter,
+            start_date_filter,
+            end_date_filter
+    ):
+
+        if not ctx.triggered:
+            # This means the callback has not been triggered yet (initial load)
+            raise PreventUpdate
+        else:
+            trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
+
+            if trigger_id == 'receiver_country_dd':
+                n_clicks = 1
+            if trigger_id == 'initiator_country_dd':
+                n_clicks = 1
+            if trigger_id == 'incident_type_dd':
+                n_clicks = 1
+            if trigger_id == 'date-picker-range':
+                n_clicks = 1
         if n_clicks:
             return None
 
@@ -49,18 +78,18 @@ def get_receiver_details(receiver_countries):
         cats = format_receiver_categories(receiver['receiver_category'], receiver['receiver_category_subcode'])
         elements = [
             html.Div([
-                html.P(f"Receiver {i + 1}", style={"font-weight": "bold"}),
-                html.P([html.Span("Name: ", style={"font-weight": "bold"}), f"{receiver['receiver_name']}"]),
-                html.P([html.Span("Country: ", style={"font-weight": "bold"}), f"{receiver['receiver_country']}"]),
-                html.P(f"Category(ies): ", style={"font-weight": "bold"}),
-                *[html.P([f"{cat}"]) for cat in cats],
-            ], style={
-                "background-color": "#f3f2f3",
-                "padding": "10px",
-                "margin": "10px",
-                "border-radius": "5px",
-                "box-shadow": "2px 2px 2px #d6d6d6"
-            })
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.P(f"Receiver {i + 1}", style={"font-weight": "bold"}),
+                    ]),
+                    dbc.CardBody([
+                        html.P([html.Span("Name: ", style={"font-weight": "bold"}), f"{receiver['receiver_name']}"]),
+                        html.P([html.Span("Country: ", style={"font-weight": "bold"}), f"{receiver['receiver_country']}"]),
+                        html.P(f"Category(ies): ", style={"font-weight": "bold"}),
+                        *[html.P([f"{cat}"]) for cat in cats],
+                    ])
+                ])
+            ], style={"margin-bottom": "10px"})
         ]
         receivers_text += elements
     return receivers_text
@@ -74,28 +103,60 @@ def get_attribution_details(
         initiators = format_attributed_initiators(attribution['attributed_initiator_country'], attribution['attributed_initiator_name'], attribution['attributed_initiator_category'])
         elements = [
             html.Div([
-                html.P(f"Attribution {i + 1}", style={"font-weight": "bold"}),
-                html.P([html.Span("Attribution date: ", style={"font-weight": "bold"}), f"{attribution['attribution_year']}"]),
-                html.P([html.Span("Attribution basis: ", style={"font-weight": "bold"}),
-                        f"{'; '.join(attribution['attribution_basis'])}"]),
-                html.P([html.Span("Attribution type: ", style={"font-weight": "bold"}),
-                        f"{'; '.join(attribution['attribution_type'])}"]),
-                html.P([html.Span("Attributing actor: ", style={"font-weight": "bold"}),
-                        f"{'; '.join(attribution['attributing_actor'])}"]),
-                html.P([html.Span("Attributing country: ", style={"font-weight": "bold"}),
-                        f"{'; '.join(attribution['attributing_country'])}"]),
-                html.P(f"Attributed initiator(s): ", style={"font-weight": "bold"}),
-                *[html.P([f"{initiator}"]) for initiator in initiators],
-            ], style={
-                "background-color": "#f3f2f3",
-                "padding": "10px",
-                "margin": "10px",
-                "border-radius": "5px",
-                "box-shadow": "2px 2px 2px #d6d6d6"
-            })
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.P(f"Attribution {i + 1}", style={"font-weight": "bold"}),
+                    ]),
+                    dbc.CardBody([
+                        html.P([html.Span("Attribution date: ", style={"font-weight": "bold"}), f"{attribution['attribution_full_date'][0]}"]),
+                        html.P([html.Span("Attribution basis: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(attribution['attribution_basis'])}"]),
+                        html.P([html.Span("Attribution type: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(attribution['attribution_type'])}"]),
+                        html.P([html.Span("Attributing actor: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(attribution['attributing_actor'])}"]),
+                        html.P([html.Span("Attributing country: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(attribution['attributing_country'])}"]),
+                        html.P(f"Attributed initiator(s): ", style={"font-weight": "bold"}),
+                        *[html.P([f"{initiator}"]) for initiator in initiators],
+                    ])
+                ])
+            ], style={"margin-bottom": "10px"})
         ]
         attribution_text += elements
     return attribution_text
+
+
+def get_responses_details(
+        responses,
+        label,
+        dict_label
+):
+    response_text = []
+    for i, response in enumerate(responses):
+        elements = [
+            html.Div([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.P(f"{label} response {i + 1}", style={"font-weight": "bold"}),
+                    ]),
+                    dbc.CardBody([
+                        html.P([html.Span("Response date: ", style={"font-weight": "bold"}), f"{response[f'{dict_label}_full_date'][0]}"]),
+                        html.P([html.Span("Country of response: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(response[f'{dict_label}_country'])}"]),
+                        html.P([html.Span("Type of actor responding: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(response[f'{dict_label}_actor'])}"]),
+                        html.P([html.Span("Type of response: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(response[f'{dict_label}_type'])}"]),
+                        html.P([html.Span("Sub-type of response: ", style={"font-weight": "bold"}),
+                                f"{'; '.join(response[f'{dict_label}_type_sub'])}"]),
+                    ])
+                ])
+            ], style={"margin-bottom": "10px"})
+        ]
+        response_text += elements
+    return response_text
+
 
 
 def create_modal_text(data=None, index=None, derived_virtual_data=None, active_cell=None, page_current=None, is_open=None):
@@ -111,26 +172,25 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                 html.Li(html.A(source, href=source, target="_blank"))
             ]) for source in incident['sources_url']]
 
-        #receiver_names = incident["receiver_name"].split('- ') if incident["receiver_name"] is not None and isinstance(incident['receiver_name'], str) else ["Unknown"]
-        #receiver_countries = incident['receiver_country'].split('; ')
-        #receiver_categories = [category.split('; ') for category in incident['receiver_category'].split('- ')]
-        #receiver_categories_subcodes = [subcode.split('; ') for subcode in incident['receiver_category_subcode'].split('- ')] if incident['receiver_category_subcode'] and isinstance(incident['receiver_category_subcode'], str) else [[""] * len(sublist) for sublist in receiver_categories]
-
-        #attribution_dates = incident['attribution_date'].split('; ') if incident['attribution_date'] and isinstance(incident['attribution_date'], str) else [""]
-        #attribution_types = incident['attribution_type'].split('; ') if incident['attribution_type'] and isinstance(incident['attribution_type'], str) else [""]*len(attribution_dates)
-        #attribution_basis = incident['attribution_basis'].split('; ') if incident['attribution_basis'] and isinstance(incident['attribution_basis'], str) else [""]*len(attribution_dates)
-        #attributing_actors = incident['attributing_actor'].split('; ') if incident['attributing_actor'] and isinstance(incident['attributing_actor'], str) else [""]*len(attribution_dates)
-        #attribution_it_companies = incident['attribution_it_company'].split('; ') if incident['attribution_it_company'] and isinstance(incident['attribution_it_company'], str) else [""]*len(attribution_dates)
-        #attributing_countries = incident['attributing_country'].split('; ') if incident['attributing_country'] and isinstance(incident['attributing_country'], str) else [""]*len(attribution_dates)
-        #attributed_initiators = incident['attributed_initiator'].split('; ') if incident['attributed_initiator'] and isinstance(incident['attributed_initiator'], str) else [""]*len(attribution_dates)
-        #attributed_initiator_countries = incident['attributed_initiator_country'].split('; ') if incident['attributed_initiator_country'] and isinstance(incident['attributed_initiator_country'], str) else [""]*len(attribution_dates)
-        #attributed_initiator_categories = incident['attributed_initiator_category'].split('; ') if incident['attributed_initiator_category'] and isinstance(incident['attributed_initiator_category'], str) else [""]*len(attribution_dates)
-
         receivers_text = get_receiver_details(incident['receivers'])
 
         attribution_text = get_attribution_details(
            incident['attributions']
         )
+
+        if incident["number_of_political_responses"] == 0:
+            pol_response_text = []
+        else:
+            pol_response_text = get_responses_details(
+            incident['political_responses'], "Political", "political_response"
+        )
+
+        if incident["number_of_legal_responses"] == 0:
+            leg_response_text = []
+        else:
+            leg_response_text = get_responses_details(
+                incident['legal_responses'], "Legal", "legal_response"
+            )
 
         content = html.Div([
             dbc.Accordion(
@@ -144,9 +204,9 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                                  f"{incident['start_date']}"]),
                          html.P([html.Span("End Date: ", style={"font-weight": "bold"}), f"{incident['end_date']}"]),
                          html.P([html.Span("Incident Type: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['incident_type'])}"]),
+                                 f"{'; '.join(list(set(incident['incident_type'])))}"]),
                          html.P([html.Span("Source Incident Detection Disclosure: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['source_incident_detection_disclosure'])}"]),
+                                 f"{'; '.join(list(set(incident['source_incident_detection_disclosure'])))}"]),
                          html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}),
                                  f"{'<br>'.join(incident['inclusion_criteria'])}"]),
                          html.P([
@@ -194,62 +254,64 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                     dbc.AccordionItem(
                         [html.P(
                             [html.Span("Data theft: ", style={"font-weight": "bold"}),
-                             f"{'; '.join(incident['data_theft'])}"]),
+                             f"{'; '.join(list(set(incident['data_theft'])))}"]),
                             html.P(
                                 [html.Span("Disruption: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['disruption'])}"]),
+                                 f"{'; '.join(list(set(incident['disruption'])))}"]),
                             html.P(
                                 [html.Span("Hijacking: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['hijacking'])}"]),
+                                 f"{'; '.join(list(set(incident['hijacking'])))}"]),
                             html.P([html.Span("Physical effects (Temporal): ", style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['physical_effects_temporal'])}"]),
+                                    f"{'; '.join(list(set(incident['physical_effects_temporal'])))}"]),
                             html.P([html.Span("Physical effects (Spatial): ", style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['physical_effects_spatial'])}"]),
+                                    f"{'; '.join(list(set(incident['physical_effects_spatial'])))}"]),
                             html.P([html.Span("Unweighted Cyber Intensity: ", style={"font-weight": "bold"}),
                                     f"{incident['unweighted_cyber_intensity']}"]),
                             html.P([html.Span("Target/Effect multiplier: ", style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['target_multiplier'])}"]),
+                                    f"{'; '.join(list(set(incident['target_multiplier'])))}"]),
                             html.P([html.Span("Weighted Cyber Intensity: ", style={"font-weight": "bold"}),
                                     f"{incident['weighted_cyber_intensity']}"]),
                             html.P([html.Span("MITRE-Initial Access: ", style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['MITRE_initial_access'])}"]),
+                                    f"{'; '.join(list(set(incident['MITRE_initial_access'])))}"]),
                             html.P([html.Span("MITRE-Impact: ", style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['MITRE_impact'])}"]),
+                                    f"{'; '.join(list(set(incident['MITRE_impact'])))}"]),
                             html.P([html.Span("Common Vulnerability Scoring System-User Interaction: ",
                                               style={"font-weight": "bold"}),
-                                    f"{'; '.join(incident['user_interaction'])}"]),
+                                    f"{'; '.join(list(set(incident['user_interaction'])))}"]),
                             html.P(
                                 [html.Span("Zero day: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['zero_days'])}"])],
+                                 f"{'; '.join(list(set(incident['zero_days'])))}"])],
                         title="Technical Categories"
                     ),
                     dbc.AccordionItem(
                         [html.P([html.Span("Cyber conflict issue: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['cyber_conflict_issue'])}"]),
+                                 f"{'; '.join(list(set(incident['cyber_conflict_issue'])))}"]),
                          html.P([html.Span("Offline conflict issue: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['offline_conflict_issue'])}"]),
+                                 f"{'; '.join(list(set(incident['offline_conflict_issue'])))}"]),
                          html.P([html.Span("Offline conflict name: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['offline_conflict_issue_subcode'])}"]),
+                                 f"{'; '.join(list(set(incident['offline_conflict_issue_subcode'])))}"]),
                          html.P([html.Span("Online conflict intensity: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['offline_conflict_intensity'])}"]),
+                                 f"{'; '.join(list(set(incident['offline_conflict_intensity'])))}"]),
                          html.P([html.Span("Offline conflict intensity score: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['offline_conflict_intensity_subcode'])}"]),
+                                 f"{'; '.join(list(set(incident['offline_conflict_intensity_subcode'])))}"]),
                          html.P(
                              [html.Span("Casualties: ", style={"font-weight": "bold"}),
-                              f"{'; '.join(incident['casualties'])}"]),
+                              f"{'; '.join(list(set(incident['casualties'])))}"]),
                          html.P([html.Span("Number of political responses: ", style={"font-weight": "bold"}),
-                                 f"{incident['number_of_political_responses']}"])],
+                                 f"{incident['number_of_political_responses']}"]),
+                         html.Div([pol_response_text[i] for i in range(len(pol_response_text))])],
                         title="Political Categories"
                     ),
                     dbc.AccordionItem(
                         [html.P([html.Span("State Responsibility Indicator: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['state_responsibility_indicator'])}"]),
+                                 f"{'; '.join(list(set(incident['state_responsibility_indicator'])))}"]),
                          html.P([html.Span("IL Breach Indicator: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['IL_breach_indicator'])}"]),
+                                 f"{'; '.join(list(set(incident['IL_breach_indicator'])))}"]),
                          html.P([html.Span("Evidence for Sanctions Indicator: ", style={"font-weight": "bold"}),
-                                 f"{'; '.join(incident['evidence_for_sanctions_indicator'])}"]),
+                                 f"{'; '.join(list(set(incident['evidence_for_sanctions_indicator'])))}"]),
                          html.P([html.Span("Number of legal responses: ", style={"font-weight": "bold"}),
-                                 f"{incident['number_of_legal_responses']}"])],
+                                 f"{incident['number_of_legal_responses']}"]),
+                         html.Div([leg_response_text[i] for i in range(len(leg_response_text))])],
                         title="Legal Categories"
                     ),
                 ], start_collapsed=True,

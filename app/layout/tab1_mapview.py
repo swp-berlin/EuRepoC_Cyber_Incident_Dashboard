@@ -1,6 +1,32 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import make_break
+from layout.layout_functions import make_break, CONFIG
+
+cyber_intensity_popover = dbc.Popover(
+    [
+        dbc.PopoverBody([
+            "Our Cyber Intensity Indicator assesses each cyber incident, based on its physical effects \
+            and socio-political severity, with scores ranging from 1-15. The figure presented here represents the \
+            average score for all cyber incidents corresponding to your selection. \
+            For more information on the methodology see ",
+            html.A("here", href="https://www.eurepoc.eu/methodology", target="_blank"),
+            "."
+        ]),
+    ],
+    target="cyber_intensity_popover",
+    trigger="hover",
+)
+
+threat_groups_popover = dbc.Popover(
+    [
+        dbc.PopoverBody([
+            "This is the number of known actors/groups having initiated cyber incidents recorded in our database \
+            for your current selection."
+        ]),
+    ],
+    target="threat_groups_info",
+    trigger="hover",
+)
 
 
 map_tab = dbc.Row([
@@ -12,6 +38,17 @@ map_tab = dbc.Row([
     ]),
 
     dbc.Row([
+        dbc.Col([
+            html.P([
+                "The map displays all incidents recorded in our database, based on your selected initiator country, \
+                 target country and timeframe. Please note that our database only covers ",
+                html.B("cyber incidents with a political dimension"),
+                 ". This includes incidents that have not yet been politicised and \
+                 cases where no political motivation and/or affiliation of the attacker(s) has been reported. \
+                 The graph on the bottom right illustrates our inclusion criteria, along with the number of incidents \
+                 corresponding to each criterion."
+            ]),
+        ], style={"margin-top": "10px"}),
         dbc.Col([
             dbc.Row([
                 dbc.Col([
@@ -26,7 +63,7 @@ map_tab = dbc.Row([
                             html.P("Cyber incidents"),
                         ], style={'padding': '5px 0px 0px 5px'}),
                     ], style={'padding': '0px', 'margin': '0px'}),
-                ], md=4, align="center"),
+                ], style={"margin-bottom": "10px"}, md=4, align="center"),
                 dbc.Col([
                     dbc.Card([
                         dbc.CardBody([
@@ -36,10 +73,24 @@ map_tab = dbc.Row([
                                     style={'font-size': '25px', 'color': '#CC0130', 'display': 'inline-block'}),
                                 html.H3(id="nb_threat_groups", style={'display': 'inline-block', 'margin-left': '5px'}),
                             ]),
-                            html.P("Threat groups"),
-                        ], style={'padding': '5px 0px 0px 5px'}),
+                            html.Span([
+                                "Threat groups", #className="position-relative"
+                                html.I(
+                                    id="threat_groups_info",
+                                    className="fa-regular fa-circle-question",
+                                    style={
+                                        'text-align': 'center',
+                                        'font-size': '12px',
+                                        'color': '#002C38',
+                                        'right': '-14px', 'top': '-2px',
+                                        'position': 'absolute'
+                                    },
+                                ),
+                                threat_groups_popover
+                            ], className="position-relative"),
+                        ], style={'padding': '5px 0px 15px 5px'}),
                     ], style={'padding': '0px', 'margin': '0px'})
-                ], md=4, align="center"),
+                ], style={"margin-bottom": "10px"}, md=4, align="center"),
                 dbc.Col([
                     dbc.Card([
                         dbc.CardBody([
@@ -53,22 +104,26 @@ map_tab = dbc.Row([
                                     style={'display': 'inline-block', 'margin-left': '5px'}
                                 ),
                             ]),
-                            html.P("Average intensity"),
-                        ], style={'padding': '5px 0px 0px 5px'}),
+                            html.Span([
+                                "Average intensity",
+                                html.I(
+                                    id="cyber_intensity_popover",
+                                    className="fa-regular fa-circle-question",
+                                    style={
+                                        'text-align': 'center',
+                                        'font-size': '12px',
+                                        'color': '#002C38',
+                                        'right': '-14px', 'top': '-2px',
+                                        'position': 'absolute'
+                                    },
+                                ),
+                                cyber_intensity_popover
+                            ], className="position-relative"),
+                        ], style={'padding': '5px 0px 15px 5px'}),
                     ], style={'padding': '0px', 'margin': '0px'})
-                ], md=4, align="center"),
+                ], style={"margin-bottom": "10px"}, md=4, align="center"),
             ], align="center"),
-        ], md=6, align="center"),
-        dbc.Col([
-            html.P([
-                "The map displays all incidents recorded in the database for your selected initiator and \
-                target countries and timeframe. Please note that our database only covers incidents that have \
-                a political dimension. This includes incidents that have not (yet) been politicized and cases for \
-                which no political motivation and/or a political affiliation of the attacker(s) has been reported. \
-                The graph below shows our inclusion criteria along with the number of incidents corresponding to \
-                each inclusion criteria."
-            ]),
-        ]),
+        ], lg=6, align="center"),
     ]),
 
     *make_break(1),
@@ -82,11 +137,17 @@ map_tab = dbc.Row([
                 color="#002C38",
                 delay_show=300,
             ),
-        ], md=6),
+        ], lg=6),
         dbc.Col([
             *make_break(1),
             html.P(html.B("Types of incidents included in the database"), style={"font-size": "1rem"}),
-            dcc.Graph(id="inclusion_graph")
-        ], md=6),
+            dcc.Graph(
+                id="inclusion_graph",
+            config={
+                **CONFIG,
+            }
+
+            ),
+        ], lg=6),
     ]),
 ])

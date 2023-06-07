@@ -11,10 +11,40 @@ today = date.today()
 receiver_countries_dd_options = pickle.load(
     open("./data/receiver_countries_dd.pickle", "rb")
 )
+
 initiator_country_dd_options = pickle.load(
     open("./data/initiator_country_dd.pickle", "rb")
 )
+initiator_country_dd_options[2]["label"] = "Africa (region)"
 
+incident_type_popover = dbc.Popover(
+    "Depicts the cyber incident(s) type concerning the reported consequences for the target(s): \
+    Data theft, data theft with doxing, disruption, hijacking without misuse, and hijacking with misuse.",
+    target="incident_type_dd_info",
+    body=True,
+    trigger="hover",
+)
+
+initiator_country_popover = dbc.Popover(
+    "Describes a) the country of origin of the attributed initiating actor and b) the categorization \
+    of the actor. Both terms apply to the incident’s planning and/or executing party. The latter can \
+    also be a cyber proxy. The term “country“ – as applied to the selection list – comprises states, \
+    provinces, and territories. This designation does not reflect an official position regarding the \
+    status of a given country or region.",
+    target="initiator_country_dd_info",
+    body=True,
+    trigger="hover",
+)
+
+receiver_country_popover = dbc.Popover(
+    "Describes a) the country of origin of the targeted entities and b) the respective actor \
+    categorization. The term “country“ – as applied to the selection list – comprises states, \
+    provinces, and territories. This designation does not reflect an official position regarding \
+    the status of a given country or region.",
+    target="receiver_country_dd_info",
+    body=True,
+    trigger="hover",
+)
 
 sidebar = dbc.Card([
     dbc.CardBody([
@@ -26,18 +56,19 @@ sidebar = dbc.Card([
             )
         ], style={'text-align': 'center', 'margin-bottom': '5px'}),
         html.P([
-            "This dashboard displays key trends in cyber incidents that are tracked as part of our database and \
-            is updated daily. Click on the Tabs to the right to find statistics covering aspects from the evolution  \
-            in the number of cyber incidents, to main types of incidents, targets, and initiators. On each Tab,  \
-            clicking on the datapoints in the graphs displays all related incidents. Using the dropdown menus below,  \
-            you can choose specific combitions of initiators and targets to update all graphs according to your selection",
+            "This dashboard displays key trends in cyber incidents tracked in our database, and it is updated daily. \
+            Click on the tabs to the right to find statistics covering various aspects: \
+            from the evolution of the number of cyber incidents to the main types of incidents, targets, and initiators. \
+            On most tabs, clicking on the data points in the graphs will display all related incidents. \
+            Using the dropdown menus below, you can select specific combinations of incident types, initiators and \
+            targets to update all graphs according to your selection.",
             ], style={'text-align': 'justify'}),
-        html.P("Please see our methodology section for further information!", style={'text-align': 'center'}),
+        html.P(["Please see our ", html.A(href="https://eurepoc.eu/methodology", target="_blank", children="methodology"), " section for further information!"], style={'text-align': 'center'}),
         html.Div(
             id="sidebar_text_default",
             children=[
                 html.P(
-                    html.B("Select intiatitor and target countries", style={'text-align': 'left', 'font-size': '1rem'})
+                    html.B("Select an incident type, initiator and target country", style={'text-align': 'left', 'font-size': '1rem'})
                 ),
             ]
         ),
@@ -49,37 +80,95 @@ sidebar = dbc.Card([
             ]
         ),
         html.Div(
-            id='initiator_country_dd_div',
-            children=[
-                html.Label(html.B('Initiator country')),
-                dcc.Dropdown(id='initiator_country_dd',
-                             options=initiator_country_dd_options),
-                *make_break(1),
-            ]
-        ),
-        html.Label(html.B('Target country')),
-        dcc.Dropdown(id='receiver_country_dd',
-                     options=receiver_countries_dd_options,
-                     value="Global (states)",
-                     clearable=False),
-        html.Div(
             id='incident_type_dd_div',
             children=[
-                *make_break(1),
-                html.Label(html.B('Incident type')),
+                html.Label([
+                    html.Span([
+                        html.B('Incident type '),
+                        html.I(
+                            id="incident_type_dd_info",
+                            className="fa-regular fa-circle-question",
+                            style={
+                                'text-align': 'center',
+                                'font-size': '12px',
+                                'color': '#002C38',
+                                'right': '-14px', 'top': '-2px',
+                                'position': 'absolute'
+                            },
+                        ),
+                        incident_type_popover
+                    ], className="position-relative"),
+                ]),
                 dcc.Dropdown(
                     id='incident_type_dd',
                     options=[
-                         "Data theft",
-                         "Data theft & Doxing",
-                         "Disruption",
-                         "Hijacking with Misuse",
-                         "Hijacking without Misuse",
-                         "Ransomware"
-                    ]
+                        {"label": "All", "value": "All"},
+                        {"label": "Data theft", "value": "Data theft"},
+                        {"label": "Data theft & Doxing", "value": "Data theft & Doxing"},
+                        {"label": "Disruption", "value": "Disruption"},
+                        {"label": "Hijacking with Misuse", "value": "Hijacking with Misuse"},
+                        {"label": "Hijacking without Misuse", "value": "Hijacking without Misuse"},
+                        {"label": "Ransomware", "value": "Ransomware"},
+                    ],
+                    value="All",
+                    clearable=False,
+                    placeholder="All"
                 ),
+                *make_break(1),
             ]
         ),
+        html.Div(
+            id='initiator_country_dd_div',
+            children=[
+                html.Label([
+                    html.Span([
+                        html.B('Initiator country '),
+                        html.I(
+                            id="initiator_country_dd_info",
+                            className="fa-regular fa-circle-question",
+                            style={
+                                'text-align': 'center',
+                                'font-size': '12px',
+                                'color': '#002C38',
+                                'right': '-14px', 'top': '-2px',
+                                'position': 'absolute'
+                            },
+                        ),
+                        initiator_country_popover
+                    ], className="position-relative"),
+                ]),
+                dcc.Dropdown(id='initiator_country_dd',
+                             options=initiator_country_dd_options,
+                             value="All countries",
+                             clearable=False,
+                             placeholder="All countries",
+                             ),
+                *make_break(1),
+            ]
+        ),
+        html.Div(id="target_country_div", children=[
+            html.Label([
+                html.Span([
+                    html.B('Receiver country '),
+                    html.I(
+                        id="receiver_country_dd_info",
+                        className="fa-regular fa-circle-question",
+                        style={
+                            'text-align': 'center',
+                            'font-size': '12px',
+                            'color': '#002C38',
+                            'right': '-14px', 'top': '-2px',
+                            'position': 'absolute'
+                        },
+                    ),
+                    receiver_country_popover
+                ], className="position-relative"),
+            ]),
+            dcc.Dropdown(id='receiver_country_dd',
+                         options=receiver_countries_dd_options,
+                         value="Global (states)",
+                         clearable=False),
+        ]),
         html.Div(
             id='date-picker-range-div',
             children=[

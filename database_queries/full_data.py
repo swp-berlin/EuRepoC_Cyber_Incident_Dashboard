@@ -37,6 +37,18 @@ for incident in all_incidents_clean:
             if region == "EU":
                 region_list[i] = "EU(MS)"
 
+for incident in all_incidents_clean:
+    for i in range(len(incident["receiver_country"])):
+        if incident["receiver_country"][i] == "EU (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+            incident["receiver_country"][i] = "EU (institutions)"
+
+
+for incident in all_incidents_clean:
+    for i in range(len(incident["receiver_country"])):
+        if incident["receiver_country"][i] == "NATO (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+            incident["receiver_country"][i] = "NATO (institutions)"
+
+
 # Clean data
 all_database_incidents_clean_dict = clean_incidents_dict(all_incidents)
 all_tracker_incidents_clean_dict = clean_incidents_dict(incidents_sent_to_tracker)
@@ -45,6 +57,91 @@ all_incidents_clean_dict = all_database_incidents_clean_dict
 for incident in all_tracker_incidents_clean_dict:
     if incident not in all_incidents_clean_dict:
         all_incidents_clean_dict.append(incident)
+
+for incident in all_incidents_clean_dict:
+    for receiver in incident["receivers"]:
+        if receiver["receiver_country"] == "EU (region)" and "International / supranational organization" in receiver["receiver_category"][i]:
+            receiver["receiver_country"] = "EU (institutions)"
+
+
+for incident in all_incidents_clean_dict:
+    for receiver in incident["receivers"]:
+        if receiver["receiver_country"] == "NATO (region)" and "International / supranational organization" in receiver["receiver_category"][i]:
+            receiver["receiver_country"] = "NATO (institutions)"
+
+
+for incident in all_incidents_clean_dict:
+    if incident["number_of_attributions"] > 0:
+        for attribution in incident["attributions"]:
+            attribution_full_date = []
+            year = attribution.get("attribution_year")
+            month = attribution.get("attribution_month")
+            day = attribution.get("attribution_day")
+            if all(v is None for v in [year, month, day]):
+                attribution_full_date.append("Not available")
+            elif year == 0:
+                attribution_full_date.append("Not available")
+            elif month is None or month == 0:
+                attribution_full_date.append(str(year))
+            elif day is None or day == 0:
+                attribution_full_date.append(f"{year}-{month}")
+            else:
+                attribution_full_date.append(f"{year}-{month}-{day}")
+            attribution["attribution_full_date"] = attribution_full_date
+
+
+for incident in all_incidents_clean_dict:
+    if incident["number_of_political_responses"] > 0:
+        for response in incident["political_responses"]:
+            response_full_date = []
+            year = response.get("political_response_year")
+            month = response.get("political_response_month")
+            day = response.get("political_response_day")
+            if all(v is None for v in [year, month, day]):
+                response_full_date.append("Not available")
+            elif year == 0:
+                response_full_date.append("Not available")
+            elif month is None or month == 0:
+                response_full_date.append(str(year))
+            elif day is None or day == 0:
+                response_full_date.append(f"{year}-{month}")
+            else:
+                response_full_date.append(f"{year}-{month}-{day}")
+            response["political_response_full_date"] = response_full_date
+
+for incident in all_incidents_clean_dict:
+    if incident["number_of_legal_responses"] > 0:
+        for response in incident["legal_responses"]:
+            response_full_date = []
+            year = response.get("legal_response_year")
+            month = response.get("legal_response_month")
+            day = response.get("legal_response_day")
+            if all(v is None for v in [year, month, day]):
+                response_full_date.append("Not available")
+            elif year == 0:
+                response_full_date.append("Not available")
+            elif month is None or month == 0:
+                response_full_date.append(str(year))
+            elif day is None or day == 0:
+                response_full_date.append(f"{year}-{month}")
+            else:
+                response_full_date.append(f"{year}-{month}-{day}")
+            response["legal_response_full_date"] = response_full_date
+
+def replace_empty_strings(data):
+    if isinstance(data, list):
+        if len(data) == 0:
+            return ["Not available"]
+        return [replace_empty_strings(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: replace_empty_strings(v) for k, v in data.items()}
+    elif data == "":
+        return "Not available"
+    else:
+        return data
+
+all_incidents_clean_dict = replace_empty_strings(all_incidents_clean_dict)
+
 
 df = pd.DataFrame(all_database_incidents_clean)
 
@@ -268,7 +365,6 @@ order_df = order_df.sort_values(by='added_to_DB', ascending=False).reset_index(d
 
 order_df.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/eurepoc_dataset.csv", index=False)
 
-
 with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_data_dict.pickle", "wb") as file:
     pickle.dump(all_incidents_clean_dict, file)
 
@@ -281,7 +377,7 @@ with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_dat
 
 
 
-from dash import html
+"""from dash import html
 
 incident = order_df.iloc[458].to_dict()
 
@@ -551,4 +647,4 @@ content = html.Div([
             ),
         ], start_collapsed=True,
     )
-])
+])"""

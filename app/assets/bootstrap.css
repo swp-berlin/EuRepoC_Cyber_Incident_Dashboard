@@ -18,7 +18,7 @@
   --bs-indigo: #6610f2;
   --bs-purple: #6f42c1;
   --bs-pink: #d63384;
-  --bs-red: #da292e;
+  --bs-red: #cc0130;
   --bs-orange: #f8765f;
   --bs-yellow: #f4bd61;
   --bs-green: #2fb380;
@@ -92,6 +92,10 @@
   :root {
     scroll-behavior: smooth;
   }
+}
+
+.plotly .nsewdrag {
+  cursor: pointer !important;
 }
 
 body {
@@ -269,11 +273,11 @@ sup {
 }
 
 a {
-  color: var(--bs-link-color);
+  color: var(--bs-red);
   text-decoration: underline;
 }
 a:hover {
-  color: var(--bs-link-hover-color);
+  color: #a30126;
 }
 
 a:not([href]):not([class]), a:not([href]):not([class]):hover {
@@ -11332,4 +11336,10 @@ thead th {
   line-height: 1.5;
   border-radius: 0;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+@media (max-width: 767.98px) {
+  .tab-row {
+    flex-direction: column !important;
+  }
 }

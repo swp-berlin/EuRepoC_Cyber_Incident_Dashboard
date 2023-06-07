@@ -1,4 +1,4 @@
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 from layout.layout_functions import make_break
 from layout.sidebar import sidebar
@@ -14,11 +14,12 @@ card_tabs = dbc.Row([
                 dbc.Tab(label="Incident types", tab_id="tab-4", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Targeted sectors", tab_id="tab-5", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Attributions", tab_id="tab-6", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Legal", tab_id="tab-7", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Responses", tab_id="tab-7", tab_style={"marginRight": "auto"}),
                 dbc.Tab(label="Initiator types", tab_id="tab-8", tab_style={"marginRight": "auto"}),
             ],
             id="card-tabs",
             active_tab="tab-1",
+            className="tab-row"
         ),
         html.Div(id="card-content"),
     ], xxl=12, xl=12, lg=12, md=12, sm=12, xs=12),
@@ -27,10 +28,21 @@ card_tabs = dbc.Row([
 
 full_layout = dbc.Container(
     children=[
+        dcc.Interval(
+                id='interval-component',
+                interval=24*60*60*1000, # in milliseconds
+                n_intervals=0
+            ),
         dbc.Row([
             dbc.Col([
                 html.H1("Cyber Incident Dashboard")
-            ], style={"text-align": "center"})
+            ], style={"text-align": "center"}),
+            dcc.Store(id='metric_values'),
+            dcc.Store(id='prev-receiver-country'),
+            dcc.Store(id='prev-initiator-country'),
+            dcc.Store(id='prev-incident-type'),
+            dcc.Store(id='prev-start-date'),
+            dcc.Store(id='prev-end-date'),
         ]),
 
         *make_break(2),
@@ -38,14 +50,14 @@ full_layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 sidebar,
-            ], xxl=3, xl=3, lg=3, md=3, sm=12, xs=12),
+            ], xxl=3, xl=3, lg=3, md=4, sm=12, xs=12),
 
             dbc.Col([
                 dbc.Row([
                     card_tabs
                 ]),
-            ], xxl=9, xl=9, lg=9, md=9, sm=12, xs=12),
+            ], xxl=9, xl=9, lg=9, md=8, sm=12, xs=12),
         ]),
     ],
-    style={"padding": "50px 70px"}, fluid=True
+    style={"padding": "50px 50px"}, fluid=True
 )

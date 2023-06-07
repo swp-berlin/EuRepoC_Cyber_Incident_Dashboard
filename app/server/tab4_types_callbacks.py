@@ -3,7 +3,7 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.express as px
 from dash import callback_context as ctx
-from server.server_functions import filter_database_by_output, filter_datatable
+from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
 
 
@@ -22,6 +22,9 @@ def types_title_callback(app):
 
         start_date = pd.to_datetime(start_date_start).strftime('%d-%m-%Y')
         end_date = pd.to_datetime(start_date_end).strftime('%d-%m-%Y')
+
+        if initiator_country == "All countries":
+            initiator_country = None
 
         if receiver_country != "Global (states)" and initiator_country:
             return html.P(
@@ -56,6 +59,9 @@ def types_graph_callback(app, df=None, states_codes=None):
                         start_date_start,
                         start_date_end):
 
+        if input_initiator_country == "All countries":
+            input_initiator_country = None
+
         filtered_df = filter_database_by_output(
             df=df,
             date_start=start_date_start,
@@ -65,93 +71,100 @@ def types_graph_callback(app, df=None, states_codes=None):
             states_codes=states_codes
         )
 
-        grouped_data = filtered_df.groupby(["incident_type"]).agg(
-            {'ID': 'nunique', "weighted_cyber_intensity": "mean"}
-        ).reset_index()
-        grouped_data['bubble_size'] = grouped_data['ID'] * grouped_data['weighted_cyber_intensity']
-        grouped_data = grouped_data[grouped_data['incident_type'] != 'Not available']
-        max_id_freq = grouped_data["ID"].idxmax()
-        max_type_freq = grouped_data.loc[max_id_freq, "incident_type"]
-        max_id_intense = grouped_data["weighted_cyber_intensity"].idxmax()
-        max_type_intense = grouped_data.loc[max_id_intense, "incident_type"]
-        max_id_combined = grouped_data["bubble_size"].idxmax()
-        max_type_combined = grouped_data.loc[max_id_combined, "incident_type"]
-
-        if grouped_data.empty:
-            key_text = html.Div([html.P("No cyber incidents for the selected options")])
-        elif max_type_freq == max_type_intense == max_type_combined:
-            key_text = html.Div([html.Span(f"Only "),
-                                 html.Span(f"{max_type_freq} ", style={"font-weight": "bold"}),
-                                 html.Span("incidents occurred for the selected options")]),
-        elif max_type_freq == max_type_combined != max_type_intense:
-            key_text = html.Div([html.Span(f"{max_type_freq} ", style={"font-weight": "bold"}),
-                                 html.Span("incidents combine both high frequency and high intensity, however, "),
-                                 html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
-                                 html.Span(" is the most intense type of incident for the selected options"),
-                                 html.Span(f" ({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity).")])
+        if filtered_df.empty:
+            fig = empty_figure(height_value=450)
+            key_text = html.P("There are no incidents matching the selected filters.")
         else:
-            key_text = html.Div([
-                html.P([
-                    html.Span(f"{max_type_freq}", style={"font-weight": "bold"}),
-                    html.Span(" is the most frequent type of incident for the selected options "),
-                    html.Span(f"({grouped_data['ID'].max()} incidents)"),
-                    html.Span(", while "), html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
-                    html.Span(" is the most intense "),
-                    html.Span(f"({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity). But "),
-                    html.Span(f"{max_type_combined}", style={"font-weight": "bold"}),
-                    html.Span(" incidents combine high frequency and high intensity.")
+            grouped_data = filtered_df.groupby(["incident_type"]).agg(
+                {'ID': 'nunique', "weighted_cyber_intensity": "mean"}
+            ).reset_index()
+            grouped_data['bubble_size'] = grouped_data['ID'] * grouped_data['weighted_cyber_intensity']
+            grouped_data['bubble_size'] = grouped_data['bubble_size'].fillna(1)
+            grouped_data = grouped_data[grouped_data['incident_type'] != 'Not available']
+            max_id_freq = grouped_data["ID"].idxmax()
+            max_type_freq = grouped_data.loc[max_id_freq, "incident_type"].capitalize()
+            max_id_intense = grouped_data["weighted_cyber_intensity"].idxmax()
+            max_type_intense = grouped_data.loc[max_id_intense, "incident_type"].lower()
+            max_id_combined = grouped_data["bubble_size"].idxmax()
+            max_type_combined = grouped_data.loc[max_id_combined, "incident_type"].capitalize()
+
+            if grouped_data.empty:
+                key_text = html.Div([html.P("No cyber incidents for the selected options")])
+            elif max_type_freq == max_type_intense == max_type_combined:
+                key_text = html.Div([html.Span(f"Only "),
+                                     html.Span(f"{max_type_freq} ", style={"font-weight": "bold"}),
+                                     html.Span("incidents occurred for the selected options")]),
+            elif max_type_freq == max_type_combined != max_type_intense:
+                key_text = html.Div([html.Span(f"{max_type_freq} ", style={"font-weight": "bold"}),
+                                     html.Span("incidents combine both high frequency and high intensity, however, "),
+                                     html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
+                                     html.Span(" is the most intense type of incident for the selected options"),
+                                     html.Span(f" ({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity).")])
+            else:
+                key_text = html.Div([
+                    html.P([
+                        html.Span(f"{max_type_freq}", style={"font-weight": "bold"}),
+                        html.Span(" is the most frequent type of incident for the selected options "),
+                        html.Span(f"({grouped_data['ID'].max()} incidents)"),
+                        html.Span(", while "), html.Span(f"{max_type_intense}", style={"font-weight": "bold"}),
+                        html.Span(" is the most intense "),
+                        html.Span(f"({round(grouped_data['weighted_cyber_intensity'].max(),1)} intensity). "),
+                        html.Span(f"{max_type_combined}", style={"font-weight": "bold"}),
+                        html.Span(" incidents combine high frequency and high intensity.")
+                    ])
                 ])
-            ])
 
-        fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
-                         size="bubble_size", size_max=60,
-                         color_discrete_sequence=['#CC0130', '#002C38', '#89BD9E', '#847E89', '#F4B942', "#79443B"],
-                         hover_name="incident_type",
-                         hover_data=["ID", "weighted_cyber_intensity", "incident_type"],
-                         )
+            fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
+                             size="bubble_size", size_max=60,
+                             color_discrete_sequence=['#CC0130', '#002C38', '#89BD9E', '#847E89', '#F4B942', "#79443B"],
+                             hover_name="incident_type",
+                             hover_data=["ID", "weighted_cyber_intensity", "incident_type"],
+                             )
 
-        fig.update_traces(textfont=dict(color='black'),
-                          marker=dict(line_width=3))
+            fig.update_traces(textfont=dict(color='black'),
+                              marker=dict(line_width=3))
 
-        fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Total incidents: %{x}<br>Average intensity: %{y:.2f}<extra></extra>')
+            fig.update_traces(hovertemplate='<b>%{hovertext}</b><br>Total incidents: %{x}<br>Average intensity: %{y:.2f}<extra></extra>')
 
-        fig.update_layout(xaxis_title="Number of incidents",
-                          yaxis_title="Average intensity",
-                          legend_title="",
-                          hovermode='closest',
-                          hoverlabel=dict(
-                                bgcolor="#002C38",
-                                font_family="Lato",
-                            ),
-                          legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=-0.4,
-                            ),
-                          font=dict(
-                              family="Lato",
-                              color="#002C38",
-                              size=14
-                          ),
-                          xaxis=dict(
-                              range=[0, grouped_data['ID'].max() + grouped_data['ID'].max()*0.1],
-                              gridcolor='rgba(0, 0, 0, 0.1)',
-                              zerolinecolor='rgba(0, 44, 56, 0.5)',
-                              zerolinewidth=0.5,
-                              showline=True,
-                              linecolor='rgba(0, 44, 56, 0.5)',
-                              linewidth=0.5,
-                          ),
-                          yaxis=dict(
-                              range=[0, None],
-                              gridcolor='rgba(0, 0, 0, 0.1)',
-                              showline=True,
-                              linecolor='rgba(0, 44, 56, 0.5)',
-                              linewidth=0.5,
-                          ),
-                          margin=dict(l=0, r=0, t=25, b=0, pad=0),
-                          plot_bgcolor='white',
-                          )
+            fig.update_layout(xaxis_title="Number of incidents",
+                              yaxis_title="Average intensity",
+                              legend_title="",
+                              hovermode='closest',
+                              hoverlabel=dict(
+                                    bgcolor="#002C38",
+                                    font_family="Lato",
+                                ),
+                              showlegend=False,
+                              legend=dict(
+                                orientation="h",
+                                yanchor="bottom",
+                                y=-0.4,
+                                ),
+                              font=dict(
+                                  family="Lato",
+                                  color="#002C38",
+                                  size=14
+                              ),
+                              xaxis=dict(
+                                  range=[0, grouped_data['ID'].max() + grouped_data['ID'].max()*0.1],
+                                  gridcolor='rgba(0, 0, 0, 0.1)',
+                                  zerolinecolor='rgba(0, 44, 56, 0.5)',
+                                  zerolinewidth=0.5,
+                                  showline=True,
+                                  linecolor='rgba(0, 44, 56, 0.5)',
+                                  linewidth=0.5,
+                              ),
+                              yaxis=dict(
+                                  range=[0, None],
+                                  gridcolor='rgba(0, 0, 0, 0.1)',
+                                  showline=True,
+                                  linecolor='rgba(0, 44, 56, 0.5)',
+                                  linewidth=0.5,
+                              ),
+                              margin=dict(l=0, r=0, t=25, b=0, pad=0),
+                              plot_bgcolor='white',
+                              dragmode=False
+                              )
 
         """fig.add_shape(type='line',
                       x0=grouped_data['ID'].median(),
@@ -176,6 +189,8 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
         Output(component_id='types_datatable', component_property='tooltip_data'),
         Output(component_id="modal_types", component_property='is_open'),
         Output(component_id="modal_types_content", component_property='children'),
+        Output(component_id="nb_incidents_types", component_property='children'),
+        Output(component_id="average_intensity_types", component_property='children'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id='date-picker-range', component_property='start_date'),
@@ -184,6 +199,7 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
         Input(component_id="types_datatable", component_property="derived_virtual_data"),
         Input(component_id="types_datatable", component_property='active_cell'),
         Input(component_id="types_datatable", component_property='page_current'),
+        Input(component_id="metric_values", component_property="data"),
         State(component_id="modal_types", component_property="is_open"),
     )
     def update_table(receiver_country_filter,
@@ -194,14 +210,11 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
                      derived_virtual_data,
                      active_cell,
                      page_current,
+                     metric_values,
                      is_open):
 
-        # Check if start and end dates have changed
-        if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
-                or ctx.triggered[0]['prop_id'] == 'date-picker-range.end_date' \
-                or ctx.triggered[0]['prop_id'] == 'initiator_country_dd.value' \
-                or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value':
-            clickData = None
+        if initiator_country_filter == "All countries":
+            initiator_country_filter = None
 
         # Filter data based on inputs
         filtered_data = filter_datatable(
@@ -213,6 +226,13 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
             states_codes=states_codes,
             types_clickdata=clickData,
         )
+
+        if clickData:
+            nb_incidents = len(filtered_data)
+            average_intensity = round(pd.to_numeric(filtered_data["weighted_cyber_intensity"]).mean(), 2)
+        else:
+            nb_incidents = metric_values["nb_incidents"]
+            average_intensity = metric_values["average_intensity"]
 
         filtered_data["start_date"] = filtered_data["start_date"].dt.strftime("%Y-%m-%d")
 
@@ -231,7 +251,7 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
             is_open=is_open
         )
 
-        return data, tooltip_data, status, modal
+        return data, tooltip_data, status, modal, nb_incidents, average_intensity
 
 
 def types_text_selection_callback(app):
@@ -262,5 +282,11 @@ def types_text_selection_callback(app):
                 html.Span(f'{clickData["points"][0]["customdata"][0]}', style={'font-weight': 'bold'})
             ])
         else:
-            text = html.P(f'No bubble selected', style={'font-style': 'italic'})
+            text = html.P([
+                html.I(
+                    className="fa-solid fa-arrow-pointer",
+                    style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
+                ),
+                ' Click on a bubble in the graph to see corresponding incidents in the table below'
+            ], style={'font-style': 'italic'})
         return text

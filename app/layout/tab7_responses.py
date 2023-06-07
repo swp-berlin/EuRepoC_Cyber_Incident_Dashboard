@@ -3,29 +3,53 @@ import dash_bootstrap_components as dbc
 from layout.layout_functions import create_table, CONFIG
 
 
-modal_attributions = dbc.Modal([
+modal_responses = dbc.Modal([
     dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_attributions_content'),
-], id='modal_attributions', size='lg')
+    dbc.ModalBody(id='modal_responses_content'),
+], id='modal_responses', size='lg')
 
 
-attributions_tab = dbc.Container(
+responses_tab = dbc.Container(
     dbc.Row([
         dbc.Row([
             dbc.Col([
-                html.H3("How long does it take for the initiator of a cyber incident to be attributed?", style={'text-align': 'center'}),
+                html.H3("How many cyber incidents are met with a political or legal response?", style={'text-align': 'center'}),
             ], style={'margin': '20px'}),
         ]),
         dbc.Row([
             dbc.Col([
-                html.Div(id="attributions_text", style={"font-size": "1rem"}),
-                dcc.Graph(
-                    id="attributions_graph",
-                    config={
-                        **CONFIG,
-                    },
-                    style={'height': '450px'}
-                )
+                dbc.Row([
+                    dbc.Col([
+                        html.Div(id="responses_text", style={"font-size": "1rem"}),
+                        dcc.Graph(
+                            id="responses_graph",
+                            config={
+                                **CONFIG,
+                            },
+                            style={'height': '300px'}
+                        ),
+                        html.Div(
+                            id="responses_donut_annotation",
+                            style={
+                                "font-size": "0.7rem",
+                                "margin-bottom": "15px"
+                            }
+                        )
+                    ], sm=12, xs=12, lg=12, xl=12, xxl=12, md=12)
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        html.Div(html.B("Percentage of incidents with a political or legal response by intensity score"), style={"font-size": "1rem"}),
+                        dcc.Graph(
+                            id="responses_graph_2",
+                            config={
+                                **CONFIG,
+                            },
+                            style={'height': '300px'}
+                        ),
+                        html.Div(id="responses_scatter_annotation", style={"font-size": "0.7rem", "margin-top": "10px"})
+                    ], sm=12, xs=12, lg=12, xl=12, xxl=12, md=12),
+                ]),
             ], sm=12, xs=12, md=12, lg=9, xl=9, xxl=9),
             dbc.Col([
                 dbc.Row([
@@ -36,7 +60,7 @@ attributions_tab = dbc.Container(
                                     html.I(
                                         className="fa-solid fa-explosion",
                                         style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
-                                    html.B(id="nb_incidents_attributions",
+                                    html.B(id="nb_incidents_responses",
                                            style={'display': 'inline-block', 'margin-left': '5px'}),
                                 ]),
                                 html.P("Total incidents"),
@@ -52,7 +76,7 @@ attributions_tab = dbc.Container(
                                         style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}
                                     ),
                                     html.B(
-                                        id="average_intensity_attributions",
+                                        id="average_intensity_responses",
                                         style={'display': 'inline-block', 'margin-left': '5px'}
                                     ),
                                 ]),
@@ -74,43 +98,30 @@ attributions_tab = dbc.Container(
                                 ]),
                             ], style={"display": "flex", "align-items": "center"}),
                             dbc.CardBody([
-                                html.Div(id="attributions_description_text"),
+                                html.Div(id="responses_description_text"),
                             ]),
-                        ]),
-                    ], style={"margin-top": "20px"}),
+                        ])
+                    ], style={'margin-top': '20px'}),
                 ]),
-                dbc.Row([
-                    dbc.Col([
-                        html.Div(id="attributions_selected",
-                                 style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
-                    ], style={"margin-top": "20px", "align": "center"}),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Button(
-                            "Clear graph selection",
-                            id="clear_attributions_click_data",
-                            n_clicks=0,
-                            color="light",
-                            size="sm",
-                            style={'margin-bottom': '12px'}
-                        )
-                    ], style={"text-align": "center"})
-                ])
-            ], align="center", style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3),
+            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3, align="center"),
         ]),
         dbc.Row([
             dbc.Col([
-                html.P(
-                    "Details on incidents",
-                    style={"font-weight": "bold", "font-size": "1rem"}
-                ),
-            ]),
-        ], style={"margin-top": "25px", "margin-bottom": "5px"}),
+                html.P(["Details on incidents"], style={"font-weight": "bold", "font-size": "1rem"}),
+            ])
+        ], style={"margin-top": "22px", "margin-bottom": "5px", "display": "flex", "align-items": "center"}),
         dbc.Row([
             dbc.Col([
-                create_table("attributions_datatable", "number_of_attributions", "Number of attributions"),
-                modal_attributions,
+                create_table(
+                    "responses_datatable",
+                    "number_of_political_responses",
+                    "Number of political responses",
+                    "number_of_legal_responses",
+                    "Number of legal responses",
+                    "weighted_cyber_intensity",
+                    "Weighted cyber intensity",
+                ),
+                modal_responses,
             ]),
         ]),
         dbc.Row([
@@ -127,3 +138,4 @@ attributions_tab = dbc.Container(
         ], style={"margin-top": "1px"}),
     ])
 )
+

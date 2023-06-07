@@ -83,22 +83,42 @@ column_names = [
     'updated_at'
 ]
 
+
 def make_break(num_breaks):
     br_list = [html.Br()] * num_breaks
     return br_list
 
 
-def create_table(table_id=None, column_name="incident_type", column_label="Incident type"):
-    initial_columns = ['name', 'start_date', column_name]
+def create_table(
+        table_id=None,
+        column_name="incident_type",
+        column_label="Incident type",
+        column_name_2=None,
+        column_label_2=None,
+        column_name_3=None,
+        column_label_3=None,
+):
+    base_columns = [
+        {'name': 'ID', 'id': 'ID'},
+        {'name': 'Incident name', 'id': 'name'},
+        {'name': 'Start date', 'id': 'start_date'},
+        {"name": column_label, 'id': column_name},
+    ]
+
+    additional_columns = []
+
+    if column_name_2 is not None:
+        additional_columns.append({"name": column_label_2, 'id': column_name_2})
+
+    if column_name_3 is not None:
+        additional_columns.append({"name": column_label_3, 'id': column_name_3})
+
+    columns = base_columns + additional_columns
+
     datatable = dash_table.DataTable(
         id=table_id,
         data=[],
-        columns=[
-            {'name': 'ID', 'id': 'ID'},
-            {'name': 'Name (click an incident to display more info)', 'id': 'name'},
-            {'name': 'Start date', 'id': 'start_date'},
-            {"name": column_label, 'id': column_name,},
-        ],
+        columns=columns,
         hidden_columns=["ID"],
         sort_action="native",
         sort_mode="multi",
@@ -153,3 +173,10 @@ def create_table(table_id=None, column_name="incident_type", column_label="Incid
         ],
     )
     return datatable
+
+
+CONFIG = {
+    "displayModeBar": False,
+    "scrollZoom": False,
+    'responsive': True
+}
