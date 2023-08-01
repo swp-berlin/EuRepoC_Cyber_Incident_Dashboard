@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-TOKEN = get_token("/Users/camille/Sync/PycharmProjects/stats_dashboard/database_queries/API_token.txt")
+TOKEN = get_token("./database_queries/API_token.txt")
 
 all_incidents = query_database(
     query_class=QueryDatabase(),
@@ -84,9 +84,8 @@ initiator_types_data = initiator_types_data.merge(initiator_name, how="outer", o
 initiator_types_data = initiator_types_data.drop_duplicates()
 initiator_types_data = initiator_types_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 initiator_types_data["receiver_region"] = initiator_types_data["receiver_region"].astype(str)
-initiator_types_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_initiators_data.csv", index=False)
+initiator_types_data.to_csv("./app/data/dashboard_initiators_data.csv", index=False)
 
-#top5_initiators = initiator_name_grouped.groupby('initiator_category').apply(lambda x: x.nlargest(5, 'ID')).reset_index(drop=True)
 
 # merge data
 merged_data = receiver_country.merge(start_date, how="outer", on="ID")
@@ -112,7 +111,7 @@ uk_filter_ordered["start_date"] = uk_filter_ordered["start_date"].dt.strftime("%
 uk_filter_ordered["start_date"] = uk_filter_ordered["start_date"].astype(str)
 
 states_code = pd.read_excel(
-    "/Users/camille/Sync/PycharmProjects/stats_dashboard/database_queries/states.xlsx",
+    "./database_queries/states.xlsx",
     sheet_name="Sheet1"
 )
 
@@ -120,7 +119,7 @@ map_data = states_code.merge(merged_data, how="outer", on="receiver_country")
 map_data = pd.concat([map_data, uk_filter_ordered], axis=0)
 map_data["ID"] = map_data["ID"].fillna("NO_ID")
 map_data["weighted_cyber_intensity"] = map_data["weighted_cyber_intensity"].fillna(0)
-map_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_map_data.csv", index=False)
+map_data.to_csv("./app/data/dashboard_map_data.csv", index=False)
 
 # Evolution of cyber incidents
 start_date["start_date"] = pd.to_datetime(start_date["start_date"])
@@ -133,7 +132,7 @@ evolution_merged = evolution_merged.merge(incident_types, how="left", on="ID")
 evolution_merged = evolution_merged.drop_duplicates()
 evolution_merged = evolution_merged.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 evolution_merged["receiver_region"] = evolution_merged["receiver_region"].astype(str)
-evolution_merged.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_evolution_data.csv", index=False)
+evolution_merged.to_csv("./app/data/dashboard_evolution_data.csv", index=False)
 
 # Types of incidents
 types_full_data = incident_types.merge(weighted_cyber_intensity, how="outer", on="ID")
@@ -144,7 +143,7 @@ types_full_data = types_full_data.drop_duplicates()
 types_full_data = types_full_data.merge(df_regions, how="outer", on="ID")
 types_full_data["receiver_region"] = types_full_data["receiver_region"].astype(str)
 types_full_data["weighted_cyber_intensity"] = pd.to_numeric(types_full_data["weighted_cyber_intensity"])
-types_full_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_incident_types_data.csv", index=False)
+types_full_data.to_csv("./app/data/dashboard_incident_types_data.csv", index=False)
 
 # Conflict issues
 conflict_issues = tables.cyber_conflict_issue.copy(deep=True)
@@ -159,7 +158,7 @@ conflict_issues_full_data = conflict_issues_full_data.merge(df_regions, how="out
 conflict_issues_full_data["receiver_region"] = conflict_issues_full_data["receiver_region"].astype(str)
 conflict_issues_full_data["cyber_conflict_issue"] = conflict_issues_full_data["cyber_conflict_issue"].str.replace("Not available", "Unknown")
 
-conflict_issues_full_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_conflict_issues_data.csv", index=False)
+conflict_issues_full_data.to_csv("./app/data/dashboard_conflict_issues_data.csv", index=False)
 
 conflict_issues_grouped = conflict_issues_full_data.groupby(["cyber_conflict_issue"]).agg({'ID': 'nunique'}).reset_index()
 conflict_issues_grouped = conflict_issues_grouped.sort_values(by="ID", ascending=False).reset_index(drop=True)
@@ -195,12 +194,11 @@ inclusion_full_data["inclusion_criteria"].replace({
 inclusion_full_data.dropna(subset=["inclusion_criteria"], inplace=True)
 
 inclusion_full_data["inclusion_criteria_subcode"].replace({
-    "Attack conducted by a state-affiliated group (includes state-sanctioned, state-supported, state-controlled but officially non-state actors) (“cyber-proxies”) / a group that is generally attributed as state-affiliated ": "Attack conducted by<br>a state-affiliated group",
-}, inplace=True)
+    "Attack conducted by a state-affiliated group (includes state-sanctioned, state-supported, state-controlled but officially non-state actors) (“cyber-proxies”) / a group that is generally attributed as state-affiliated ": "Attack conducted by<br>a state-affiliated group"}, inplace=True)
 
 # Drop NaN values if present
 inclusion_full_data.dropna(subset=["inclusion_criteria_subcode"], inplace=True)
-inclusion_full_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_inclusion_data.csv", index=False)
+inclusion_full_data.to_csv("./app/data/dashboard_inclusion_data.csv", index=False)
 
 
 ## Network data
@@ -224,7 +222,7 @@ network["receiver_country"] = network["receiver_country"].astype(str).apply(lamb
 network["initiator_name"] = network["initiator_name"].astype(str).apply(lambda x: re.sub(r"Not available", "Unknown", x))
 network["cyber_conflict_issue"] = network["cyber_conflict_issue"].astype(str).apply(lambda x: re.sub(r"Not available", "Unknown", x))
 
-network.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_network_data.csv", index=False)
+network.to_csv("./app/data/dashboard_network_data.csv", index=False)
 
 
 # Targeted sectors
@@ -259,7 +257,7 @@ for row in targeted_sectors_full.itertuples():
     if "Social groups" in row.receiver_category and row.receiver_category_subcode == "":
         targeted_sectors_full.at[row.Index, "receiver_category_subcode"] = "Not Specified"
 
-targeted_sectors_full.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_targeted_sectors_data.csv", index=False)
+targeted_sectors_full.to_csv("./app/data/dashboard_targeted_sectors_data.csv", index=False)
 
 # Attributions timeline
 attributions = tables.attributions_full_df.copy(deep=True)
@@ -362,24 +360,29 @@ attribution_basis_df_merged["date_difference_third_months"] = attribution_basis_
 attribution_basis_df_merged["date_difference_other_months"] = attribution_basis_df_merged["date_difference_other_months"].apply(lambda x: round(x, 1) if pd.notnull(x) else pd.NaT)
 attribution_basis_df_merged["average_overall"] = attribution_basis_df_merged["average_overall"].apply(lambda x: round(x, 1) if pd.notnull(x) else pd.NaT)
 
-attribution_basis_df_merged.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_attributions_data.csv", index=False)
+attribution_basis_df_merged.to_csv("./app/data/dashboard_attributions_data.csv", index=False)
 
 pol = tables.political_responses.copy(deep=True)
+added_to_db = tables.added_to_db
 pol_graph_data = pol.merge(start_date, on='ID', how='outer')
+pol_graph_data = pol_graph_data.merge(added_to_db, on='ID', how='outer')
 pol_graph_data = pol_graph_data.merge(receiver_country, on='ID', how='outer')
 pol_graph_data = pol_graph_data.merge(initiator_country, on='ID', how='outer')
 pol_graph_data = pol_graph_data.merge(incident_types, on='ID', how='outer')
 pol_graph_data = pol_graph_data.drop_duplicates()
+pol_graph_data = pol_graph_data[pol_graph_data["added_to_DB"] > "2022-08-15"]
 pol_graph_data = pol_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 pol_graph_data["receiver_region"] = pol_graph_data["receiver_region"].astype(str)
 
 
 legal = tables.legal_responses.copy(deep=True)
 legal_graph_data = legal.merge(start_date, on='ID', how='outer')
+legal_graph_data = legal_graph_data.merge(added_to_db, on='ID', how='outer')
 legal_graph_data = legal_graph_data.merge(receiver_country, on='ID', how='outer')
 legal_graph_data = legal_graph_data.merge(initiator_country, on='ID', how='outer')
 legal_graph_data = legal_graph_data.merge(incident_types, on='ID', how='outer')
 legal_graph_data = legal_graph_data.drop_duplicates()
+legal_graph_data = legal_graph_data[legal_graph_data["added_to_DB"] > "2022-08-15"]
 legal_graph_data = legal_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 legal_graph_data["receiver_region"] = legal_graph_data["receiver_region"].astype(str)
 
@@ -391,19 +394,21 @@ nb_leg = tables.number_of_legal_responses.copy(deep=True)
 nb_leg["legal_response"] = np.where(nb_leg["number_of_legal_responses"] > 0, "Yes", "No")
 nb_leg = nb_leg.drop(columns=['number_of_legal_responses'])
 responses = nb_pol.merge(nb_leg, on="ID", how="outer")
-responses = responses.merge(weighted_cyber_intensity, on="ID", how="outer")
+responses = responses.merge(added_to_db, on="ID", how="outer")
+responses = responses[responses["added_to_DB"] > "2022-08-15"]
+responses = responses.merge(weighted_cyber_intensity, on="ID", how="left")
 
 responses["political_response"] = responses["political_response"].apply(lambda x: 1 if x == "Yes" else 0)
 responses["legal_response"] = responses["legal_response"].apply(lambda x: 1 if x == "Yes" else 0)
 responses["response"] = responses["political_response"] + responses["legal_response"]
 responses["response"] = responses["response"].apply(lambda x: 1 if x > 0 else 0)
 
-responses_graph_data = responses.merge(start_date, on='ID', how='outer')
-responses_graph_data = responses_graph_data.merge(receiver_country, on='ID', how='outer')
-responses_graph_data = responses_graph_data.merge(initiator_country, on='ID', how='outer')
-responses_graph_data = responses_graph_data.merge(incident_types, on='ID', how='outer')
+responses_graph_data = responses.merge(start_date, on='ID', how='left')
+responses_graph_data = responses_graph_data.merge(receiver_country, on='ID', how='left')
+responses_graph_data = responses_graph_data.merge(initiator_country, on='ID', how='left')
+responses_graph_data = responses_graph_data.merge(incident_types, on='ID', how='left')
 responses_graph_data = responses_graph_data.drop_duplicates()
 responses_graph_data = responses_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 responses_graph_data["receiver_region"] = responses_graph_data["receiver_region"].astype(str)
 
-responses_graph_data.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/dashboard_responses_data.csv", index=False)
+responses_graph_data.to_csv("./app/data/dashboard_responses_data.csv", index=False)

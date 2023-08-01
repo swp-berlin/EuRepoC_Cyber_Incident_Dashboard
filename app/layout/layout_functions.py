@@ -1,4 +1,5 @@
 from dash import html, dash_table
+import dash_bootstrap_components as dbc
 import json
 
 column_names = [
@@ -180,3 +181,37 @@ CONFIG = {
     "scrollZoom": False,
     'responsive': True
 }
+
+def generate_intensity_popover(target_id=None):
+    return dbc.Popover(
+        [
+            dbc.PopoverBody([
+                "Our Cyber Intensity Indicator assesses each cyber incident, based on its physical effects \
+                and socio-political severity, with scores ranging from 1-15. The figure presented here represents the \
+                average score for all cyber incidents corresponding to your selection. \
+                For more information on the methodology see ",
+                html.A("here", href="https://www.eurepoc.eu/methodology", target="_blank"),
+                "."
+            ]),
+        ],
+        target=target_id,
+        trigger="hover",
+    )
+
+def generate_text_with_popover_icon(text=None, span_id=None, popover=None):
+    text_span = html.Span([
+        text,
+        html.I(
+            id=span_id,
+            className="fa-regular fa-circle-question",
+            style={
+                'text-align': 'center',
+                'font-size': '12px',
+                'color': '#002C38',
+                'right': '-14px', 'top': '-2px',
+                'position': 'absolute'
+            },
+        ),
+        popover,
+    ], className="position-relative")
+    return text_span

@@ -2,6 +2,7 @@ from dash import html
 from dash.dependencies import Input, Output, State
 from dash import callback_context as ctx
 from server.common_callbacks import create_modal_text
+from server.server_functions import empty_figure
 import pandas as pd
 import numpy as np
 import pickle
@@ -147,37 +148,45 @@ def network_graph_callback(app, df=None, states_codes=None):
             lambda x: '; '.join(x) if isinstance(x, (list, tuple)) else x)
         network_full = network_full.drop_duplicates()
 
-        all_nodes = list(
-            set(
-                network_full["initiator_country"].unique().tolist() + network_full["receiver_country"].unique().tolist()
+        if network_full.empty:
+            elements = [{"data": {"id": "No data", "flag": "No incidents corresponding to your selection"}}]
+            all_nodes = []
+
+            return elements, all_nodes
+
+        else:
+
+            all_nodes = list(
+                set(
+                    network_full["initiator_country"].unique().tolist() + network_full["receiver_country"].unique().tolist()
+                )
             )
-        )
-        flags = []
-        for node in all_nodes:
-            for i in range(len(country_flags["country_name"])):
-                if node == country_flags["country_name"][i]:
-                    flags.append(country_flags["flag"][i])
+            flags = []
+            for node in all_nodes:
+                for i in range(len(country_flags["country_name"])):
+                    if node == country_flags["country_name"][i]:
+                        flags.append(country_flags["flag"][i])
 
-        nodes = []
-        for i in range(len(all_nodes)):
-            nodes.append({"data": {"id": all_nodes[i], "flag": flags[i]}})
+            nodes = []
+            for i in range(len(all_nodes)):
+                nodes.append({"data": {"id": all_nodes[i], "flag": flags[i]}})
 
-        edges = []
-        for index, row in network_full.iterrows():
-            edges.append({"data": {
-                "source": row["initiator_country"],
-                "target": row["receiver_country"],
-                "weight": row["weight"],
-                "nb_incidents": str(row["ID_x"]),
-                "cyber_intensity": str(round(row["weighted_cyber_intensity"], 2)),
-                "initiator_name": row["initiator_name"],
-                "initiator_category": row["initiator_category"],
-                "cyber_conflict_issue": row["cyber_conflict_issue"],
-            }})
+            edges = []
+            for index, row in network_full.iterrows():
+                edges.append({"data": {
+                    "source": row["initiator_country"],
+                    "target": row["receiver_country"],
+                    "weight": row["weight"],
+                    "nb_incidents": str(row["ID_x"]),
+                    "cyber_intensity": str(round(row["weighted_cyber_intensity"], 2)),
+                    "initiator_name": row["initiator_name"],
+                    "initiator_category": row["initiator_category"],
+                    "cyber_conflict_issue": row["cyber_conflict_issue"],
+                }})
 
-        elements = nodes + edges
+            elements = nodes + edges
 
-        return elements, all_nodes
+            return elements, all_nodes
 
 
 def style_node_onclick_callback(app):
@@ -217,6 +226,7 @@ def style_node_onclick_callback(app):
                     "selector": 'node',
                     'style': {
                         'label': 'data(flag)',
+                        'font-size': '22px',
                         'background-color': '#002C38',
                         'width': '30px',
                         'height': '30px',
@@ -226,8 +236,8 @@ def style_node_onclick_callback(app):
                 {
                     'selector': 'edge',
                     'style': {
-                        'line-color': 'rgb(230, 234, 235)',
-                        'target-arrow-color': 'rgb(230, 234, 235)',
+                        'line-color': 'rgb(153, 171, 175)',
+                        'target-arrow-color': 'rgb(153, 171, 175)',
                         'arrow-shape': 'triangle',
                         'target-arrow-shape': 'triangle',
                         'curve-style': 'bezier',
@@ -259,6 +269,7 @@ def style_node_onclick_callback(app):
                 "selector": 'node',
                 'style': {
                     'label': 'data(flag)',
+                    'font-size': '22px',
                     'background-color': '#002C38',
                     'width': '30px',
                     'height': '30px',
@@ -268,8 +279,8 @@ def style_node_onclick_callback(app):
             {
                 'selector': 'edge',
                 'style': {
-                    'line-color': 'rgb(230, 234, 235)',
-                    'target-arrow-color': 'rgb(230, 234, 235)',
+                    'line-color': 'rgb(153, 171, 175)',
+                    'target-arrow-color': 'rgb(153, 171, 175)',
                     'arrow-shape': 'triangle',
                     'target-arrow-shape': 'triangle',
                     'curve-style': 'bezier',
@@ -403,7 +414,7 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None, states_
     def update_table(node, receiver_country_filter, nodes_present, derived_virtual_data, active_cell, page_current, is_open):
         # Filter data based on inputs
         copied_data = df.copy(deep=True)
-        copied_data['start_date'] = copied_data['start_date'].dt.date
+        copied_data['start_date'] = copied_data['start_date'].dt.date.fillna('')
         copied_data['receiver_country'] = copied_data['receiver_country'].fillna('')
         copied_data['initiator_country'] = copied_data['initiator_country'].fillna('')
 
@@ -438,7 +449,7 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None, states_
 
         elif receiver_country_filter == 'Global (states)':
             match_regex = '|'.join(nodes_present)
-            filtered_data = copied_data[copied_data['receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
+            filtered_data = copied_data
             if node:
                 received = copied_data[copied_data['initiator_country'].str.contains(node['data']['id']) & copied_data[
                     'receiver_country'].str.contains(match_regex, flags=re.IGNORECASE)]
@@ -473,12 +484,11 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None, states_
         tooltip_data = [{column: {'value': str(value), 'type': 'markdown'}
                          for column, value in row.items()} for row in data]
 
-        #filtered_data = filtered_data.fillna("Not available")
-        #filtered_data["attribution_date"] = filtered_data["attribution_date"].replace(" 00:00:00","")
-
+        copied_data_dict = data_dict.copy()
+        copied_index = index.copy()
         status, modal = create_modal_text(
-            data=data_dict,
-            index=index,
+            data=copied_data_dict,
+            index=copied_index,
             derived_virtual_data=derived_virtual_data,
             active_cell=active_cell,
             page_current=page_current,

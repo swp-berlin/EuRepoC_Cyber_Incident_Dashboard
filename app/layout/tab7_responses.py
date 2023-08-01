@@ -1,12 +1,16 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG
+from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
 
 
 modal_responses = dbc.Modal([
     dbc.ModalHeader(html.H3('Incident details')),
     dbc.ModalBody(id='modal_responses_content'),
-], id='modal_responses', size='lg')
+], id='modal_responses', size='xl', centered=True, scrollable=True)
+
+mean_intensity_responses_popover = generate_intensity_popover(target_id="mean_intensity_responses_info")
+mean_intensity_responses_popover_icon = generate_text_with_popover_icon(
+    text="Mean intensity", span_id="mean_intensity_responses_info", popover=mean_intensity_responses_popover)
 
 
 responses_tab = dbc.Container(
@@ -80,8 +84,8 @@ responses_tab = dbc.Container(
                                         style={'display': 'inline-block', 'margin-left': '5px'}
                                     ),
                                 ]),
-                                html.P("Mean intensity"),
-                            ], style={'padding': '5px 0px 0px 5px'}),
+                                mean_intensity_responses_popover_icon,
+                            ], style={'padding': '5px 0px 15px 5px'}),
                         ], style={'padding': '0px', 'margin-top': '0px'})
                     ], width=6),
                 ]),

@@ -4,6 +4,7 @@ import pandas as pd
 import geopandas as gpd
 import plotly.express as px
 from datetime import date
+from datetime import datetime as dt
 
 today = date(2023,5,10)
 
@@ -76,8 +77,6 @@ def metric_values_callback(app):
 
 def map_callback(app, df=None, geometry=None):
     @app.callback(
-        #Output(component_id='nb_incidents', component_property='children'),
-        #Output(component_id='average_intensity', component_property='children'),
         Output(component_id='nb_threat_groups', component_property='children'),
         Output(component_id='map', component_property='figure'),
         Input(component_id='receiver_country_dd', component_property='value'),
@@ -103,6 +102,10 @@ def map_callback(app, df=None, geometry=None):
         # Convert input dates to datetime
         date_range = pd.date_range(start=start_date_start, end=start_date_end)
 
+        if start_date_start == "2000-01-01" and start_date_end == str(dt.now().date()):
+            start_date_start = None
+            start_date_end = None
+
         # Define input filters in dictionary
         input_filters = {
             'filter_column': input_receiver_country,
@@ -111,7 +114,10 @@ def map_callback(app, df=None, geometry=None):
         }
 
         # Filter the data based on input dates and filters
-        filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
+        if start_date_start is None and start_date_end is None:
+            filtered_df = copied_data
+        else:
+            filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
 
         for col, val in input_filters.items():
             if val is not None:
@@ -120,8 +126,6 @@ def map_callback(app, df=None, geometry=None):
         # If the filtered DataFrame is empty indicate 0 incidents and empty map which still shows the selected country
         if filtered_df.empty:
             filtered_df = copied_data.loc[copied_data['filter_column'] == input_filters['filter_column']]
-            #nb_incidents = 0
-            #average_intensity = 0
             number_of_groups = 0
             grouped_df = filtered_df.drop(
                 columns=["start_date", "initiator_country", "initiator_name", "incident_type", "weighted_cyber_intensity"]).reset_index()
@@ -131,8 +135,6 @@ def map_callback(app, df=None, geometry=None):
                 grouped_df = grouped_df.head(1)
         else:
             # Count the number of unique incidents and threat groups and calculate the average intensity
-            #nb_incidents = filtered_df['ID'].nunique()
-            #average_intensity = round(filtered_df['weighted_cyber_intensity'].mean(), 1)
             number_of_groups = filtered_df['initiator_name'].nunique()
             # Group the data by country and count the number of unique incidents per country
             grouped_df = filtered_df.groupby(['ISO_A3', 'receiver_country']).agg({'ID': 'nunique'}).reset_index()
@@ -141,13 +143,6 @@ def map_callback(app, df=None, geometry=None):
         # Add the geometry to the filtered DataFrame for plotting the map
         grouped_df = grouped_df.merge(geometry, on="ISO_A3")
         grouped_gdf = gpd.GeoDataFrame(grouped_df, geometry=grouped_df.geometry)
-
-        if input_receiver_country == "Global (states)" \
-                and input_initiator_country is None \
-                and input_incident_type is None\
-                and start_date_start == "2000-01-01"\
-                and start_date_end == today.strftime(format="%Y-%m-%d"):
-            nb_incidents = copied_data['ID'].nunique() - 1
 
         # Define the map center and zoom level
         if input_receiver_country == "EU (member states)" or input_receiver_country == "EU (institutions)" \
@@ -282,5 +277,4 @@ def map_callback(app, df=None, geometry=None):
                           'Number of incidents: %{customdata}'
         )
 
-        return  number_of_groups, fig
-    #nb_incidents, average_intensity
+        return number_of_groups, fig

@@ -41,16 +41,16 @@ def responses_title_callback(app):
             type = "Cyber"
 
         if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"{type.lower()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
-            between {start_date} and {end_date}"))
+            return html.P(html.B(f"{type.capitalize()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
+            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
         elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"{type.lower()} incidents with political or legal responses between {start_date} and {end_date}"))
+            return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
         elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"{type.lower()} incidents with political or legal responses from initiators based in {initiator_country} \
-            between {start_date} and {end_date}"))
+            return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses from initiators based in {initiator_country} \
+            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
         elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"{type.lower()} incidents against {receiver_country} with political or legal responses \
-            between {start_date} and {end_date}"))
+            return html.P(html.B(f"{type.capitalize()} incidents against {receiver_country} with political or legal responses \
+            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
 
 
 def responses_graph_callback(app, df=None, states_codes=None):
@@ -91,16 +91,19 @@ def responses_graph_callback(app, df=None, states_codes=None):
             states_codes=states_codes
         )
 
-        responses_grouped = filtered_df.groupby(['ID']).agg({
+        filtered_df_trim = filtered_df[
+            ["ID", "response", "political_response", "legal_response", "weighted_cyber_intensity"]]
+        filtered_df_trim = filtered_df_trim.drop_duplicates()
+        responses_grouped = filtered_df_trim.groupby(['ID']).agg({
             "response": "sum",
             "political_response": "sum",
             "legal_response": "sum",
         }).reset_index()
 
-        responses_grouped["response"] = responses_grouped["response"].apply(lambda x: 1 if x > 0 else 0)
+        """responses_grouped["response"] = responses_grouped["response"].apply(lambda x: 1 if x > 0 else 0)
         responses_grouped["political_response"] = responses_grouped["political_response"].apply(
             lambda x: 1 if x > 0 else 0)
-        responses_grouped["legal_response"] = responses_grouped["legal_response"].apply(lambda x: 1 if x > 0 else 0)
+        responses_grouped["legal_response"] = responses_grouped["legal_response"].apply(lambda x: 1 if x > 0 else 0)"""
 
         pie_data = {
             "total_responses": [
@@ -116,10 +119,6 @@ def responses_graph_callback(app, df=None, states_codes=None):
                 responses_grouped.ID.nunique() - responses_grouped.legal_response.sum(),
                 responses_grouped.legal_response.sum()
             ],
-            #"text_total": [
-             #   "",
-              #  f"<b>{round(responses_grouped.response.sum() / responses_grouped.ID.nunique() * 100, 2)}%</b>"
-           # ],
             "text_political": [
                 "",
                 f"<b>{round(responses_grouped.political_response.sum() / responses_grouped.ID.nunique() * 100, 2)}%</b>"
@@ -132,9 +131,10 @@ def responses_graph_callback(app, df=None, states_codes=None):
 
         pie_df = pd.DataFrame(pie_data)
 
-        filtered_df["weighted_cyber_intensity"] = pd.to_numeric(filtered_df["weighted_cyber_intensity"])
 
-        responses_grouped_2 = filtered_df.groupby(['weighted_cyber_intensity']).agg({
+        filtered_df_trim["weighted_cyber_intensity"] = pd.to_numeric(filtered_df_trim["weighted_cyber_intensity"])
+
+        responses_grouped_2 = filtered_df_trim.groupby(['weighted_cyber_intensity']).agg({
             'ID': 'nunique',
             "response": "sum",
             "political_response": "sum",
@@ -166,29 +166,23 @@ def responses_graph_callback(app, df=None, states_codes=None):
             responses_plot = empty_figure(height_value=300)
             responses_plot_2 = empty_figure(height_value=300)
             responses_description_text = html.P("There are no incidents matching the selected filters.")
-            responses_donut_annotation = ""
+            responses_donut_annotation = "Note: this tab only covers incidents added to our database since Sep. 2022, as \
+            responses were previously not coded. One incident can have both legal and political responses."
             responses_scatter_annotation = html.I("")
 
         elif total_nb_responses == 0:
 
             responses_description_text = html.P("None of the incidents matching the selected filters have a political or legal response.")
-            responses_donut_annotation = html.I("Note: one incident can have both legal and political responses")
+            responses_donut_annotation = html.I("Note: this tab only covers incidents added to our database since Sep. 2022, as \
+            responses were previously not coded. One incident can have both legal and political responses")
             responses_scatter_annotation = html.I("")
 
             responses_plot = sp.make_subplots(rows=1, cols=2,
                                               specs=[[{'type': 'domain'}, {'type': 'domain'}]])
 
-            #colors_all = ['#e6eaeb', '#002C38']  ['#e6eaeb', '#89bd9e']
             colors_pol = ['#e6eaeb', '#002C38']
             colors_leg = ['#e6eaeb', '#cc0130']
-            #responses_plot.add_trace(go.Pie(
-             #   labels=['Incidents <b>without</b> response', 'Incidents <b>with</b> response'],
-              #  values=pie_df['total_responses'],
-               # marker=dict(colors=colors_all),
-                #text=pie_df['text_total'],
-                #textinfo='text',
-                #hovertemplate="%{label}: %{value} <br>(%{percent})",
-                #name='Total', hole=0.4), 1, 1)
+
             responses_plot.add_trace(go.Pie(
                 labels=['Incidents <b>without</b> political response', 'Incidents <b>with</b> political response'],
                 values=pie_df['total_political_responses'],
@@ -217,7 +211,6 @@ def responses_graph_callback(app, df=None, states_codes=None):
                     family="Lato",
                 ),
                 annotations=[
-                    #dict(text=f'<b>Both</b><br>{pie_df.loc[1, "total_responses"]}', x=0.126, y=0.5, showarrow=False, font=dict(size=12)),
                     dict(text=f'<b>Political</b><br>responses<br>{pie_df.loc[1, "total_political_responses"]}', x=0.185, y=0.5, showarrow=False, font=dict(size=12)),
                     dict(text=f'<b>Legal</b><br>responses<br>{pie_df.loc[1, "total_legal_responses"]}', x=0.815, y=0.5, showarrow=False, font=dict(size=12))
                 ],
@@ -258,17 +251,9 @@ def responses_graph_callback(app, df=None, states_codes=None):
         else:
             responses_plot = sp.make_subplots(rows=1, cols=2, specs=[[{'type': 'domain'}, {'type': 'domain'}]])
 
-            #colors_all = ['#e6eaeb', '#002C38'] ['#e6eaeb', '#89bd9e']
             colors_pol = ['#e6eaeb', '#002C38']
             colors_leg = ['#e6eaeb', '#cc0130']
-            #responses_plot.add_trace(go.Pie(
-                #labels=['Incidents <b>without</b> response', 'Incidents <b>with</b> response'],
-               # values=pie_df['total_responses'],
-               # marker=dict(colors=colors_all),
-               # text=pie_df['text_total'],
-                #textinfo='text',
-               # hovertemplate="%{label}: %{value} <br>(%{percent})",
-               # name='Total', hole=0.4), 1, 1)
+
             responses_plot.add_trace(go.Pie(
                 labels=['Incidents <b>without</b> political response', 'Incidents <b>with</b> political response'],
                 values=pie_df['total_political_responses'],
@@ -297,7 +282,6 @@ def responses_graph_callback(app, df=None, states_codes=None):
                     family="Lato",
                 ),
                 annotations=[
-                    #dict(text=f'<b>Both</b><br>{pie_df.loc[1, "total_responses"]}', x=0.126, y=0.5, showarrow=False, font=dict(size=12)),
                     dict(text=f'<b>Political</b><br>responses<br>{pie_df.loc[1, "total_political_responses"]}', x=0.185, y=0.5, showarrow=False, font=dict(size=12)),
                     dict(text=f'<b>Legal</b><br>responses<br>{pie_df.loc[1, "total_legal_responses"]}', x=0.815, y=0.5, showarrow=False, font=dict(size=12))
                 ],
@@ -365,44 +349,53 @@ def responses_graph_callback(app, df=None, states_codes=None):
                 responses_description_text = html.P([
                     "Only ",
                     html.B(f"{round(responses_grouped.political_response.sum() / responses_grouped.ID.nunique()*100,2)}%"),
-                    " of cyber incidents were met with a political response, and only ",
+                    " of cyber incidents coded since Sep. 2022 were met with a political response, and only ",
                     html.B(f"{round(responses_grouped.legal_response.sum() / responses_grouped.ID.nunique()*100,2)}%"),
-                    " were met with a legal response. A higher proportion of cyber incidents with a high-intensity score received political or legal responses. \
-                    However, the most intense cyber incidents in our database were often not met with a response."])
+                    " were met with a legal response. The second graph shows the proportion of cyber incidents with a \
+                    political (green) or legal (red) response for each intensity score. In most cases, the higher the \
+                    intensity, the higher the proportion of incidents having received a ",
+                    html.B("legal "), "response. The situation is more mixed for political responses."])
             elif responses_grouped.political_response.sum() / responses_grouped.ID.nunique() < 0.5 \
                     and responses_grouped.legal_response.sum() / responses_grouped.ID.nunique() >= 0.5:
                 responses_description_text = html.P([
                     "Only ",
                     html.B(
                         f"{round(responses_grouped.political_response.sum() / responses_grouped.ID.nunique() * 100, 2)}%"),
-                    " of cyber incidents were met with a political response, while ",
+                    " of cyber incidents coded since Sep. 2022 were met with a political response, while ",
                     html.B(
                         f"{round(responses_grouped.legal_response.sum() / responses_grouped.ID.nunique() * 100, 2)}%"),
-                    " were met with a legal response. A higher proportion of cyber incidents with a high-intensity score received political or legal responses. \
-                    However, the most intense cyber incidents in our database were often not met with a response."])
+                    " were met with a legal response. The second graph shows the proportion of cyber incidents with a \
+                    political (green) or legal (red) response for each intensity score. In most cases, the higher the \
+                    intensity, the higher the proportion of incidents having received a ",
+                    html.B("legal "), "response. The situation is more mixed for political responses."])
             elif responses_grouped.political_response.sum() / responses_grouped.ID.nunique() >= 0.5 \
                     and responses_grouped.legal_response.sum() / responses_grouped.ID.nunique() < 0.5:
                 responses_description_text = html.P([
                     html.B(
                         f"{round(responses_grouped.political_response.sum() / responses_grouped.ID.nunique() * 100, 2)}%"),
-                    " of cyber incidents were met with a political response, while only ",
+                    " of cyber incidents coded since Sep. 2022 were met with a political response, while only ",
                     html.B(
                         f"{round(responses_grouped.legal_response.sum() / responses_grouped.ID.nunique() * 100, 2)}%"),
-                    " were met with a legal response. A higher proportion of cyber incidents with a high-intensity score received political or legal responses. \
-                    However, the most intense cyber incidents in our database were often not met with a response."])
+                    " were met with a legal response. The second graph shows the proportion of cyber incidents with a \
+                    political (green) or legal (red) response for each intensity score. In most cases, the higher the \
+                    intensity, the higher the proportion of incidents having received a ",
+                    html.B("legal "), "response. The situation is more mixed for political responses."])
             else:
                 responses_description_text = html.P([
                     html.B(f"{round(responses_grouped.response.sum() / responses_grouped.ID.nunique() * 100, 2)}%"),
-                    " of incidents were met with a political or legal response. \
-                    A higher proportion of cyber incidents with a high-intensity score received political or legal responses. \
-                    However, the most intense cyber incidents in our database were often not met with a response."
+                    " of incidents coded since Sep. 2022 were met with a political or legal response. \
+                    The second graph shows the proportion of cyber incidents with a \
+                    political (green) or legal (red) response for each intensity score. In most cases, the higher the \
+                    intensity, the higher the proportion of incidents having received a ",
+                    html.B("legal "), "response. The situation is more mixed for political responses."
                 ])
 
-            responses_donut_annotation = html.I("Note: one incident can have both legal and political responses")
+            responses_donut_annotation = html.I("Note: this tab only covers incidents added to our database since Sep. 2022, as \
+            responses were previously not coded. One incident can have both legal and political responses.")
             responses_scatter_annotation = html.I("Note: the size of the points represents the number of incidents")
 
-        nb_incidents = metric_values["nb_incidents"]
-        average_intensity = metric_values["average_intensity"]
+        nb_incidents = responses_grouped.ID.nunique()
+        average_intensity = round(filtered_df_trim.weighted_cyber_intensity.mean(),2)
 
         return responses_plot, \
             responses_plot_2, \
@@ -468,9 +461,11 @@ def responses_datatable_callback(app, df=None, states_codes=None, data_dict=None
                          for column, value in row.items()}
                         for row in data]
 
+        copied_data_dict = data_dict.copy()
+        copied_index = index.copy()
         status, modal = create_modal_text(
-            data=data_dict,
-            index=index,
+            data=copied_data_dict,
+            index=copied_index,
             derived_virtual_data=derived_virtual_data,
             active_cell=active_cell,
             page_current=page_current,

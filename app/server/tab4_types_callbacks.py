@@ -165,21 +165,6 @@ def types_graph_callback(app, df=None, states_codes=None):
                               plot_bgcolor='white',
                               dragmode=False
                               )
-
-        """fig.add_shape(type='line',
-                      x0=grouped_data['ID'].median(),
-                      y0=grouped_data['weighted_cyber_intensity'].min(),
-                      x1=grouped_data['ID'].median(),
-                      y1=grouped_data['weighted_cyber_intensity'].max(),
-                      line=dict(color='lightgrey', width=2, dash='dot'))
-
-        fig.add_shape(type='line',
-                      x0=grouped_data['ID'].min(),
-                      y0=grouped_data['weighted_cyber_intensity'].median(),
-                      x1=grouped_data['ID'].max(),
-                      y1=grouped_data['weighted_cyber_intensity'].median(),
-                      line=dict(color='lightgrey', width=2, dash='dot'))"""
-
         return fig, key_text
 
 
@@ -242,9 +227,12 @@ def types_datatable_callback(app, df=None, states_codes=None, data_dict=None, in
                          for column, value in row.items()}
                         for row in data]
 
+        copied_data_dict = data_dict.copy()
+        copied_index = index.copy()
+
         status, modal = create_modal_text(
-            data=data_dict,
-            index=index,
+            data=copied_data_dict,
+            index=copied_index,
             derived_virtual_data=derived_virtual_data,
             active_cell=active_cell,
             page_current=page_current,

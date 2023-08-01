@@ -39,13 +39,13 @@ for incident in all_incidents_clean:
 
 for incident in all_incidents_clean:
     for i in range(len(incident["receiver_country"])):
-        if incident["receiver_country"][i] == "EU (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+        if incident["receiver_country"][i] == "EU (region)" and i < len(incident["receiver_category"]) and "International / supranational organization" in incident["receiver_category"][i]:
             incident["receiver_country"][i] = "EU (institutions)"
 
 
 for incident in all_incidents_clean:
     for i in range(len(incident["receiver_country"])):
-        if incident["receiver_country"][i] == "NATO (region)" and "International / supranational organization" in incident["receiver_category"][i]:
+        if incident["receiver_country"][i] == "NATO (region)" and i < len(incident["receiver_category"]) and "International / supranational organization" in incident["receiver_category"][i]:
             incident["receiver_country"][i] = "NATO (institutions)"
 
 
@@ -60,13 +60,14 @@ for incident in all_tracker_incidents_clean_dict:
 
 for incident in all_incidents_clean_dict:
     for receiver in incident["receivers"]:
-        if receiver["receiver_country"] == "EU (region)" and "International / supranational organization" in receiver["receiver_category"][i]:
+        if receiver["receiver_country"] == "EU (region)" and "International / supranational organization" in receiver["receiver_category"]:
             receiver["receiver_country"] = "EU (institutions)"
+
 
 
 for incident in all_incidents_clean_dict:
     for receiver in incident["receivers"]:
-        if receiver["receiver_country"] == "NATO (region)" and "International / supranational organization" in receiver["receiver_category"][i]:
+        if receiver["receiver_country"] == "NATO (region)" and "International / supranational organization" in receiver["receiver_category"]:
             receiver["receiver_country"] = "NATO (institutions)"
 
 
@@ -143,7 +144,77 @@ def replace_empty_strings(data):
 all_incidents_clean_dict = replace_empty_strings(all_incidents_clean_dict)
 
 
-df = pd.DataFrame(all_database_incidents_clean)
+df = pd.DataFrame(all_incidents_clean)
+tables = TablesAll(all_incidents_clean)
+tables.get_all_tables()
+
+start_date = tables.start_date.copy(deep=True)
+weighted_cyber_intensity = tables.weighted_cyber_intensity.copy(deep=True)
+impact_indicator_value = tables.impact_indicator_value.copy(deep=True)
+offline_conflict_intensity = tables.offline_conflict_intensity_subcode.copy(deep=True)
+offline_conflict_intensity["offline_conflict_intensity_subcode"] = offline_conflict_intensity["offline_conflict_intensity_subcode"].str.replace("HIIK ", "")
+attribution_date = tables.attributions_full_df.copy(deep=True)
+attribution_date = attribution_date.drop(columns=["attribution_ID", "attribution_type", "attributing_country", "attributing_actor", "attribution_basis", "Settled"])
+attribution_date = attribution_date.drop_duplicates()
+number_of_political_responses = tables.number_of_political_responses.copy(deep=True)
+number_of_legal_responses = tables.number_of_legal_responses.copy(deep=True)
+
+attribution_time = start_date.merge(attribution_date, on="ID", how="left")
+attribution_time["start_date"] = pd.to_datetime(attribution_time["start_date"])
+attribution_time["attribution_date"] = pd.to_datetime(attribution_time["attribution_date"])
+to_date_diff = lambda x: (x['attribution_date'] - x['start_date']) if (x['attribution_date'] - x['start_date']) >= pd.Timedelta('0 days') else np.nan
+attribution_time['time_to_attribution'] = attribution_time.apply(to_date_diff, axis=1)
+attribution_time['time_to_attribution'] = attribution_time['time_to_attribution'].apply(lambda x: int(x.days) if pd.notna(x) else None)
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
+import pandas as pd
+
+scaler = MinMaxScaler(feature_range=(0, 4))
+
+def get_radar_scores_scaled(df, column_name, new_column_name):
+    df[column_name] = pd.to_numeric(df[column_name])
+    df[column_name] = np.sqrt(df[column_name])
+    scaler.fit(df[[column_name]])
+    df[new_column_name] = scaler.transform(df[[column_name]])
+    value_average_converted = df[new_column_name].mean()
+    return df, value_average_converted
+
+impact_indicator_value_with_scores, impact_indicator_value_average_converted = get_radar_scores_scaled(impact_indicator_value, "impact_indicator_value", "radar_score_impact")
+weighted_cyber_intensity_with_scores, weighted_cyber_intensity_average_converted = get_radar_scores_scaled(weighted_cyber_intensity, "weighted_cyber_intensity", "radar_score_intensity")
+number_of_political_responses_with_scores, number_of_political_responses_average_converted = get_radar_scores_scaled(number_of_political_responses, "number_of_political_responses", "radar_score_political")
+number_of_legal_responses_with_scores, number_of_legal_responses_average_converted = get_radar_scores_scaled(number_of_legal_responses, "number_of_legal_responses", "radar_score_legal")
+offline_conflict_intensity_with_scores, offline_conflict_intensity_average_converted = get_radar_scores_scaled(offline_conflict_intensity, "offline_conflict_intensity_subcode", "radar_score_offline_conflict")
+attribution_time_with_scores, attribution_time_average_converted = get_radar_scores_scaled(attribution_time, "time_to_attribution", "radar_score_attribution")
+
+
+impact_indicator_value_with_scores = impact_indicator_value_with_scores.drop(columns=['impact_indicator_value'])
+weighted_cyber_intensity_with_scores = weighted_cyber_intensity_with_scores.drop(columns=['weighted_cyber_intensity'])
+number_of_political_responses_with_scores = number_of_political_responses_with_scores.drop(columns=['number_of_political_responses'])
+number_of_legal_responses_with_scores = number_of_legal_responses_with_scores.drop(columns=['number_of_legal_responses'])
+offline_conflict_intensity_with_scores = offline_conflict_intensity_with_scores.drop(columns=['offline_conflict_intensity_subcode'])
+attribution_time_with_scores = attribution_time.drop_duplicates(subset=['ID'])
+attribution_time_with_scores = attribution_time_with_scores.drop(columns=['start_date', 'attribution_date', 'time_to_attribution'])
+
+df = df.merge(impact_indicator_value_with_scores, on='ID', how='outer')
+df = df.merge(weighted_cyber_intensity_with_scores, on='ID', how='outer')
+df = df.merge(number_of_political_responses_with_scores, on='ID', how='outer')
+df = df.merge(number_of_legal_responses_with_scores, on='ID', how='outer')
+df = df.merge(offline_conflict_intensity_with_scores, on='ID', how='outer')
+df = df.merge(attribution_time_with_scores, on='ID', how='outer')
+
+average_scores_across_incidents = {
+    '<b>Impact indicator</b>': impact_indicator_value_average_converted,
+    '<b>Cyber intensity</b>': weighted_cyber_intensity_average_converted,
+    '<b>Offline conflict intensity</b>': offline_conflict_intensity_average_converted,
+    '<b>Attribution time</b>': attribution_time_average_converted,
+    "<b>Number of political responses</b>": number_of_political_responses_average_converted,
+    "<b>Number of legal responses</b>": number_of_legal_responses_average_converted,
+    "<b>Impact indicator</b>": impact_indicator_value_average_converted
+}
+
+with open('./data/average_scores_across_incidents.pickle', 'wb') as f:
+    pickle.dump(average_scores_across_incidents, f)
+
 
 df = df.drop(
     columns=[
@@ -164,7 +235,6 @@ df = df.drop(
         "logs", "articles"
     ]
 )
-
 
 def to_string(x):
     if isinstance(x, list) and any(isinstance(item, list) for item in x):
@@ -188,11 +258,6 @@ def convert_column(x, column_name):
 
 for col in df.columns:
     convert_column(df, col)
-
-
-
-tables = TablesAll(all_database_incidents_clean)
-tables.get_all_tables()
 
 political_responses = tables.political_responses.copy(deep=True)
 attributions = tables.attributions_full_df.copy(deep=True)
@@ -363,288 +428,14 @@ for col in order_df.columns:
 
 order_df = order_df.sort_values(by='added_to_DB', ascending=False).reset_index(drop=True)
 
-order_df.to_csv("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/eurepoc_dataset.csv", index=False)
+order_df.to_csv("./app/data/eurepoc_dataset.csv", index=False)
 
-with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_data_dict.pickle", "wb") as file:
+with open("./app/data/full_data_dict.pickle", "wb") as file:
     pickle.dump(all_incidents_clean_dict, file)
 
 full_data_dict_index_map = {}
 for i in range(len(all_incidents_clean_dict)):
     full_data_dict_index_map[all_incidents_clean_dict[i]["ID"]] = i
 
-with open("/Users/camille/Sync/PycharmProjects/stats_dashboard/app/data/full_data_dict_index_map.pickle", "wb") as file:
+with open("./app/data/full_data_dict_index_map.pickle", "wb") as file:
     pickle.dump(full_data_dict_index_map, file)
-
-
-
-"""from dash import html
-
-incident = order_df.iloc[458].to_dict()
-
-attribution_dates = incident['attribution_date'].split('; ')
-attribution_types = incident['attribution_type'].split('; ')
-attribution_basis = incident['attribution_basis'].split('; ')
-attributing_actors = incident['attributing_actor'].split('; ')
-attribution_it_companies = incident['attribution_it_company'].split('; ')
-attributing_countries = incident['attributing_country'].split('; ')
-attributed_initiators = incident['attributed_initiator'].split('; ')
-attributed_initiator_countries = incident['attributed_initiator_country'].split('; ')
-attributed_initiator_categories = incident['attributed_initiator_category'].split('; ')
-
-def get_attribution_details(
-        attribution_dates,
-        attribution_types,
-        attribution_basis,
-        attributing_actors,
-        attribution_it_companies,
-        attributing_countries,
-        attributed_initiators,
-        attributed_initiator_countries,
-        attributed_initiator_categories
-):
-    attribution_text = []
-    for i in range(len(attribution_dates)):
-        elements = [
-            html.Div([
-                html.P(f"Attribution {i + 1}", style={"font-weight": "bold"}),
-                html.P([html.Span("Attribution date: ", style={"font-weight": "bold"}), f"{attribution_dates[i]}"]),
-                html.P([html.Span("Attribution basis: ", style={"font-weight": "bold"}), f"{attribution_basis[i]}"]),
-                html.P([html.Span("Attribution type: ", style={"font-weight": "bold"}), f"{attribution_types[i]}"]),
-                html.P([html.Span("Attributing actor: ", style={"font-weight": "bold"}), f"{attributing_actors[i]}"]),
-                html.P([html.Span("Attributing country: ", style={"font-weight": "bold"}), f"{attributing_countries[i]}"]),
-                html.P([html.Span("Attributed initiator: ", style={"font-weight": "bold"}), f"{attributed_initiators[i]}"]),
-                html.P([html.Span("Attributed initiator country: ", style={"font-weight": "bold"}), f"{attributed_initiator_countries[i]}"]),
-                html.P([html.Span("Attributed initiator category: ", style={"font-weight": "bold"}), f"{attributed_initiator_categories[i]}"]),
-            ], style={
-                "background-color": "#f3f2f3",
-                "padding": "10px",
-                "margin": "10px",
-                "border-radius": "5px",
-                "box-shadow": "2px 2px 2px #d6d6d6"
-            })
-        ]
-        attribution_text += elements
-    return attribution_text
-
-sources_attribution = incident["sources_attribution"].split('; ')
-
-
-
-
-
-receiver_names = incident["receiver_name"].split('- ')
-receiver_countries = incident['receiver_country'].split('; ')
-receiver_categories = incident['receiver_category'].split('- ')
-receiver_categories = [category.split('; ') for category in receiver_categories]
-receiver_categories_subcodes = incident['receiver_category_subcode'].split('- ')
-receiver_categories_subcodes = [subcode.split('; ') for subcode in receiver_categories_subcodes]
-receivers_text = []
-
-receiver_names = incident["receiver_name"].split('- ') if incident["receiver_name"] is not None else ["Unknown"]
-receiver_countries = incident['receiver_country'].split('; ')
-receiver_categories = [category.split('; ') for category in incident['receiver_category'].split('- ')]
-receiver_categories_subcodes = [subcode.split('; ') for subcode in incident['receiver_category_subcode'].split('- ')] if incident['receiver_category_subcode'] and isinstance(incident['receiver_category_subcode'], str) else [[""]]
-
-
-sources_url = incident['sources_url'].split('; ')
-sources_url_text = []
-for source in sources_url:
-    sources_url_text.append(html.A(source, href=source, target="_blank"))
-
-
-
-for incident in all_incidents_clean_dict:
-    elements = [
-        html.Div([
-            f"Receiver {i}",
-            html.P([html.Span("Name: ", style={"font-weight": "bold"}), f"{incident['name']}"]),
-            html.P([html.Span("Country: ", style={"font-weight": "bold"}), f"{receiver_countries[i]}"]),
-        ])
-    ]
-    for y in range(len(receiver_categories[i])):
-        elements.append(html.P([html.Span("Category: ", style={"font-weight": "bold"}), f"{receiver_categories[i][y]}"]))
-        elements.append(html.P([html.Span("Category Subcode: ", style={"font-weight": "bold"}), f"{receiver_categories_subcodes[i][y]}"]))
-    receivers_text.append(elements)
-
-content = html.Div([
-    dbc.Accordion(
-        [
-            dbc.AccordionItem(
-                html.P([html.Span("Name of incident: ", style={"font-weight": "bold"}), f"{incident['name']}"]),
-                html.P([html.Span("Start Date: ", style={"font-weight": "bold"}), f"{incident['start_date']}"]),
-                html.P([html.Span("End Date: ", style={"font-weight": "bold"}), f"{incident['end_date']}"]),
-                html.P([html.Span("Incident Type: ", style={"font-weight": "bold"}), f"{incident['incident_type']}"]),
-                html.P([html.Span("Source Incident Detection Disclosure: ", style={"font-weight": "bold"}), f"{incident['source_incident_detection_disclosure']}"]),
-                html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}), f"{incident['inclusion_criteria']}"]),
-                html.P([
-                    html.Span("Sources URL: ", style={"font-weight": "bold"}),
-                    html.Span([sources_url_text[i] for i in receivers_text])
-                ]),
-                html.P([html.Span("Added to database: ", style={"font-weight": "bold"}), f"{incident['added_to_DB']}"]),
-                html.P([html.Span("Last updated: ", style={"font-weight": "bold"}), f"{incident['updated_at']}"]),
-                title="Key information about the incident"
-            ),
-            dbc.AccordionItem(
-                [receivers_text[i] for i in receivers_text],
-                title="Receiver(s)"
-            ),
-            dbc.AccordionItem(
-                html.P([html.Span(f"Initiator Country: ", style={"font-weight": "bold"}), f"{incident['initiator_country']}"]),
-                html.P([html.Span(f"Initiator Category: ", style={"font-weight": "bold"}), f"{incident['initiator_category']}"]),
-                html.P([html.Span(f"Initiator Category Subcode: ", style={"font-weight": "bold"}), f"{incident['initiator_category_subcode']}"]),
-                title="Initator(s)"
-            ),
-            dbc.AccordionItem(
-                title="Attribution(s)"
-            ),
-            dbc.AccordionItem(
-                html.P([html.Span("Impact indicator: ", style={"font-weight": "bold"}), f"{incident['impact_indicator']} - {incident['impact_indicator_value']}"]),
-                html.P([html.Span("Functional impact: ", style={"font-weight": "bold"}), f"{incident['functional_impact']}"]),
-                html.P([html.Span("Intelligence impact: ", style={"font-weight": "bold"}), f"{incident['intelligence_impact']}"]),
-                html.P([html.Span("Political impact (Affected entities): ", style={"font-weight": "bold"}), f"{incident['political_impact_affected_entities']}"]),
-                html.P([html.Span("Political impact (Third countries): ", style={"font-weight": "bold"}), f"{incident['political_impact_third_countries']}"]),
-                html.P([html.Span("Economic impact: ", style={"font-weight": "bold"}), f"{incident['economic_impact']}"]),
-                title="Impact Indicator"
-            ),
-            dbc.AccordionItem(
-                title="Technical Categories"
-            ),
-            dbc.AccordionItem(
-                title="Political Categories"
-            ),
-            dbc.AccordionItem(
-                title="Legal Categories"
-            ),
-        ], flush=True,
-    )
-])
-
-index_map = {}
-for i in range(len(all_incidents_clean_dict)):
-    index_map[all_incidents_clean_dict[i]["ID"]] = i
-
-first_value = all_incidents_clean_dict[index_map[8]]
-
-attr_date = df_reversed["attribution_date"][14].split('; ')
-attr_type = df_reversed["attribution_type"][14].split('; ')
-
-incident = all_incidents_clean_dict[14]
-
-content = html.Div([
-    dbc.Accordion(
-        [
-            dbc.AccordionItem(
-                [html.P([html.Span("Name of incident: ", style={"font-weight": "bold"}),
-                         f"{incident['name']}"]),
-                 html.P([html.Span("Description: ", style={"font-weight": "bold"}),
-                         f"{incident['description']}"]),
-                 html.P([html.Span("Start Date: ", style={"font-weight": "bold"}),
-                         f"{incident['start_date']}"]),
-                 html.P([html.Span("End Date: ", style={"font-weight": "bold"}), f"{incident['end_date']}"]),
-                 html.P([html.Span("Incident Type: ", style={"font-weight": "bold"}),
-                         f"{'; '.join(incident['incident_type'])}"]),
-                 html.P([html.Span("Source Incident Detection Disclosure: ", style={"font-weight": "bold"}),
-                         f"{'; '.join(incident['source_incident_detection_disclosure'])}"]),
-                 html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}),
-                         f"{'<br>'.join(incident['inclusion_criteria'])}"]),
-                 html.P([
-                     html.Span("Sources URL: ", style={"font-weight": "bold"}),
-                     html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
-                 ]),
-                 html.P([html.Span("Added to database: ", style={"font-weight": "bold"}),
-                         f"{incident['added_to_DB']}"]),
-                 html.P([html.Span("Last updated: ", style={"font-weight": "bold"}),
-                         f"{incident['updated_at']}"])],
-                title="Key information about the incident"
-            ),
-            dbc.AccordionItem(
-                [receivers_text[i] for i in range(len(receivers_text))],
-                title="Receiver(s)"
-            ),
-            dbc.AccordionItem(
-                [html.P([html.Span(f"Initiator Country: ", style={"font-weight": "bold"}),
-                         f"{incident['initiator_country']}"]),
-                 html.P([html.Span(f"Initiator Category: ", style={"font-weight": "bold"}),
-                         f"{incident['initiator_category']}"]),
-                 html.P([html.Span(f"Initiator Category Subcode: ", style={"font-weight": "bold"}),
-                         f"{incident['initiator_category_subcode']}"])],
-                title="Initator(s)"
-            ),
-            dbc.AccordionItem(
-                [attribution_text[i] for i in range(len(attribution_text))],
-                title="Attribution(s)"
-            ),
-            dbc.AccordionItem(
-                [html.P([html.Span("Impact indicator: ", style={"font-weight": "bold"}),
-                         f"{incident['impact_indicator']} - {incident['impact_indicator_value']}"]),
-                 html.P([html.Span("Functional impact: ", style={"font-weight": "bold"}),
-                         f"{incident['functional_impact']}"]),
-                 html.P([html.Span("Intelligence impact: ", style={"font-weight": "bold"}),
-                         f"{incident['intelligence_impact']}"]),
-                 html.P([html.Span("Political impact (Affected entities): ", style={"font-weight": "bold"}),
-                         f"{incident['political_impact_affected_entities']}"]),
-                 html.P([html.Span("Political impact (Third countries): ", style={"font-weight": "bold"}),
-                         f"{incident['political_impact_third_countries']}"]),
-                 html.P([html.Span("Economic impact: ", style={"font-weight": "bold"}),
-                         f"{incident['economic_impact']}"])],
-                title="Impact Indicator"
-            ),
-            dbc.AccordionItem(
-                [html.P(
-                    [html.Span("Data theft: ", style={"font-weight": "bold"}), f"{incident['data_theft']}"]),
-                    html.P(
-                        [html.Span("Disruption: ", style={"font-weight": "bold"}),
-                         f"{incident['disruption']}"]),
-                    html.P(
-                        [html.Span("Hijacking: ", style={"font-weight": "bold"}), f"{incident['hijacking']}"]),
-                    html.P([html.Span("Physical effects (Temporal): ", style={"font-weight": "bold"}),
-                            f"{incident['physical_effects_temporal']}"]),
-                    html.P([html.Span("Physical effects (Spatial): ", style={"font-weight": "bold"}),
-                            f"{incident['physical_effects_spatial']}"]),
-                    html.P([html.Span("Unweighted Cyber Intensity: ", style={"font-weight": "bold"}),
-                            f"{incident['unweighted_cyber_intensity']}"]),
-                    html.P([html.Span("Target/Effect multiplier: ", style={"font-weight": "bold"}),
-                            f"{incident['target_multiplier']}"]),
-                    html.P([html.Span("Weighted Cyber Intensity: ", style={"font-weight": "bold"}),
-                            f"{incident['weighted_cyber_intensity']}"]),
-                    html.P([html.Span("MITRE-Initial Access: ", style={"font-weight": "bold"}),
-                            f"{incident['MITRE_initial_access']}"]),
-                    html.P([html.Span("MITRE-Impact: ", style={"font-weight": "bold"}),
-                            f"{incident['MITRE_impact']}"]),
-                    html.P([html.Span("Common Vulnerability Scoring System-User Interaction: ",
-                                      style={"font-weight": "bold"}), f"{incident['user_interaction']}"]),
-                    html.P(
-                        [html.Span("Zero day: ", style={"font-weight": "bold"}), f"{incident['zero_days']}"])],
-                title="Technical Categories"
-            ),
-            dbc.AccordionItem(
-                [html.P([html.Span("Cyber conflict issue: ", style={"font-weight": "bold"}),
-                         f"{incident['cyber_conflict_issue']}"]),
-                 html.P([html.Span("Offline conflict issue: ", style={"font-weight": "bold"}),
-                         f"{incident['offline_conflict_issue']}"]),
-                 html.P([html.Span("Offline conflict name: ", style={"font-weight": "bold"}),
-                         f"{incident['offline_conflict_issue_subcode']}"]),
-                 html.P([html.Span("Online conflict intensity: ", style={"font-weight": "bold"}),
-                         f"{incident['offline_conflict_intensity']}"]),
-                 html.P([html.Span("Offline conflict intensity score: ", style={"font-weight": "bold"}),
-                         f"{incident['offline_conflict_intensity_subcode']}"]),
-                 html.P(
-                     [html.Span("Casualties: ", style={"font-weight": "bold"}), f"{incident['casualties']}"]),
-                 html.P([html.Span("Number of political responses: ", style={"font-weight": "bold"}),
-                         f"{incident['number_of_political_responses']}"])],
-                title="Political Categories"
-            ),
-            dbc.AccordionItem(
-                [html.P([html.Span("State Responsibility Indicator: ", style={"font-weight": "bold"}),
-                         f"{incident['state_responsibility_indicator']}"]),
-                 html.P([html.Span("IL Breach Indicator: ", style={"font-weight": "bold"}),
-                         f"{incident['IL_breach_indicator']}"]),
-                 html.P([html.Span("Evidence for Sanctions Indicator: ", style={"font-weight": "bold"}),
-                         f"{incident['evidence_for_sanctions_indicator']}"]),
-                 html.P([html.Span("Number of legal responses: ", style={"font-weight": "bold"}),
-                         f"{incident['number_of_legal_responses']}"])],
-                title="Legal Categories"
-            ),
-        ], start_collapsed=True,
-    )
-])"""

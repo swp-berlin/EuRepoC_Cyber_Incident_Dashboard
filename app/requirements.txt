@@ -7,4 +7,3 @@ datetime
 dash-cytoscape==0.3.0
 numpy
 gunicorn==20.1.0
-apscheduler==3.10.1

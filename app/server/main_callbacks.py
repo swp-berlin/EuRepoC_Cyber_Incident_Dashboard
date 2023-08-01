@@ -8,9 +8,7 @@ from layout.tab6_attributions import attributions_tab
 from layout.tab7_responses import responses_tab
 from layout.tab8_initiator_types import initiators_tab
 from datetime import date
-
-
-today = date.today()
+from datetime import datetime as dt
 
 
 # reset filter selection button callback
@@ -21,8 +19,6 @@ def reset_button_callback(app):
         Output("incident_type_dd", "value"),
         Output('date-picker-range', 'start_date'),
         Output('date-picker-range', 'end_date'),
-        Output('date-picker-range_attributions', 'start_date'),
-        Output('date-picker-range_attributions', 'end_date'),
         Input("reset", "n_clicks")
     )
     def on_button_click(n_clicks):
@@ -31,9 +27,9 @@ def reset_button_callback(app):
                 None, \
                 None, \
                 date(2000, 1, 1), \
-                date(today.year, today.month, today.day), \
-                date(2010, 1, 1), \
-                date(today.year, today.month, today.day)
+                dt.now().date()
+                #date(2010, 1, 1), \
+                #dt.now().date()
 
 
 # tab change callback
@@ -44,24 +40,23 @@ def tab_change_callback(app):
         Output("sidebar_text_network", "style"),
         Output("initiator_country_dd_div", "style"),
         Output("date-picker-range-div", "style"),
-        Output("date-picker-range-div_attributions", "style"),
         Output("incident_type_dd_div", "style"),
         [Input("card-tabs", "active_tab")]
     )
     def tab_content(active_tab):
         if active_tab == "tab-1":
-            return map_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return map_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-2":
-            return network_tab, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
+            return network_tab, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
         elif active_tab == "tab-3":
-            return timeline_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return timeline_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-4":
-            return types_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'none'}
+            return types_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}
         elif active_tab == "tab-5":
-            return sectors_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return sectors_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-6":
-            return attributions_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}
+            return attributions_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-7":
-            return responses_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return responses_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-8":
-            return initiators_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}
+            return initiators_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}

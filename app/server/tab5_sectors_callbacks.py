@@ -78,9 +78,11 @@ def sectors_graph_callback(app, df=None, states_codes=None):
             states_codes=states_codes
         )
 
+        print(filtered_df.head(10))
+
         if filtered_df.empty:
             fig = empty_figure(height_value=500)
-            return fig, {}, {}
+            return fig, {}
 
         else:
 
@@ -209,7 +211,7 @@ def sectors_datatable_callback(app, df=None, states_codes=None, data_dict=None, 
 
         if initiator_country_filter == "All countries":
             initiator_country_filter = None
-        if incident_type_filter == "All countries":
+        if incident_type_filter == "All":
             incident_type_filter = None
 
         filtered_data = filter_datatable(
@@ -283,9 +285,11 @@ def sectors_datatable_callback(app, df=None, states_codes=None, data_dict=None, 
                         for row in data]
 
 
+        copied_data_dict = data_dict.copy()
+        copied_index = index.copy()
         status, modal = create_modal_text(
-            data=data_dict,
-            index=index,
+            data=copied_data_dict,
+            index=copied_index,
             derived_virtual_data=derived_virtual_data,
             active_cell=active_cell,
             page_current=page_current,

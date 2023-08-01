@@ -1,12 +1,12 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG
+from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
 
 
 modal_types = dbc.Modal([
     dbc.ModalHeader(html.H3('Incident details')),
     dbc.ModalBody(id='modal_types_content'),
-], id='modal_types', size='lg')
+], id='modal_types', size='xl', centered=True, scrollable=True)
 
 data_theft_popover = dbc.Popover(
     "Incidents initiated to gather information from a targeted computer or computer system. Although data or \
@@ -56,6 +56,9 @@ ransomware_popover = dbc.Popover(
     trigger="hover",
 )
 
+mean_intensity_types_popover = generate_intensity_popover(target_id="mean_intensity_types_info")
+mean_intensity_types_popover_icon = generate_text_with_popover_icon(
+    text="Mean intensity", span_id="mean_intensity_types_info", popover=mean_intensity_types_popover)
 
 types_tab = dbc.Container(
     dbc.Row([
@@ -272,8 +275,8 @@ types_tab = dbc.Container(
                                         style={'display': 'inline-block', 'margin-left': '5px'}
                                     ),
                                 ]),
-                                html.P("Mean intensity"),
-                            ], style={'padding': '5px 0px 0px 5px'}),
+                                mean_intensity_types_popover_icon,
+                            ], style={'padding': '5px 0px 15px 5px'}),
                         ], style={'padding': '0px', 'margin-top': '0px'})
                     ], width=6),
                 ]),

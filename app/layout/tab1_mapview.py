@@ -1,32 +1,29 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import make_break, CONFIG
+from layout.layout_functions import make_break, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
 
-cyber_intensity_popover = dbc.Popover(
-    [
-        dbc.PopoverBody([
-            "Our Cyber Intensity Indicator assesses each cyber incident, based on its physical effects \
-            and socio-political severity, with scores ranging from 1-15. The figure presented here represents the \
-            average score for all cyber incidents corresponding to your selection. \
-            For more information on the methodology see ",
-            html.A("here", href="https://www.eurepoc.eu/methodology", target="_blank"),
-            "."
-        ]),
-    ],
-    target="cyber_intensity_popover",
-    trigger="hover",
+
+cyber_intensity_popover = generate_intensity_popover(target_id="cyber_intensity_popover")
+cyber_intensity_popover_icon = generate_text_with_popover_icon(
+    text="Mean intensity", span_id="cyber_intensity_popover", popover=cyber_intensity_popover
 )
 
-threat_groups_popover = dbc.Popover(
-    [
+threat_groups_popover = dbc.Popover([
         dbc.PopoverBody([
             "This is the number of known actors/groups having initiated cyber incidents recorded in our database \
             for your current selection."
         ]),
-    ],
-    target="threat_groups_info",
-    trigger="hover",
+    ], target="threat_groups_info", trigger="hover")
+
+threat_groups_popover_icon = generate_text_with_popover_icon(
+    text="Threat groups", span_id="threat_groups_info", popover=threat_groups_popover
 )
+
+inclusion_criteria_popover = dbc.Popover([
+        dbc.PopoverBody([
+            "Please note that that one incident can have multiple inclusion criteria"
+        ]),
+    ], target="inclusion_criteria_info", trigger="hover")
 
 
 map_tab = dbc.Row([
@@ -73,21 +70,7 @@ map_tab = dbc.Row([
                                     style={'font-size': '25px', 'color': '#CC0130', 'display': 'inline-block'}),
                                 html.H3(id="nb_threat_groups", style={'display': 'inline-block', 'margin-left': '5px'}),
                             ]),
-                            html.Span([
-                                "Threat groups", #className="position-relative"
-                                html.I(
-                                    id="threat_groups_info",
-                                    className="fa-regular fa-circle-question",
-                                    style={
-                                        'text-align': 'center',
-                                        'font-size': '12px',
-                                        'color': '#002C38',
-                                        'right': '-14px', 'top': '-2px',
-                                        'position': 'absolute'
-                                    },
-                                ),
-                                threat_groups_popover
-                            ], className="position-relative"),
+                            threat_groups_popover_icon,
                         ], style={'padding': '5px 0px 15px 5px'}),
                     ], style={'padding': '0px', 'margin': '0px'})
                 ], style={"margin-bottom": "10px"}, md=4, align="center"),
@@ -104,21 +87,7 @@ map_tab = dbc.Row([
                                     style={'display': 'inline-block', 'margin-left': '5px'}
                                 ),
                             ]),
-                            html.Span([
-                                "Average intensity",
-                                html.I(
-                                    id="cyber_intensity_popover",
-                                    className="fa-regular fa-circle-question",
-                                    style={
-                                        'text-align': 'center',
-                                        'font-size': '12px',
-                                        'color': '#002C38',
-                                        'right': '-14px', 'top': '-2px',
-                                        'position': 'absolute'
-                                    },
-                                ),
-                                cyber_intensity_popover
-                            ], className="position-relative"),
+                            cyber_intensity_popover_icon,
                         ], style={'padding': '5px 0px 15px 5px'}),
                     ], style={'padding': '0px', 'margin': '0px'})
                 ], style={"margin-bottom": "10px"}, md=4, align="center"),
@@ -140,7 +109,21 @@ map_tab = dbc.Row([
         ], lg=6),
         dbc.Col([
             *make_break(1),
-            html.P(html.B("Types of incidents included in the database"), style={"font-size": "1rem"}),
+            html.Span([
+                html.B("Types of incidents included in the database", style={"font-size": "1rem"}),
+                html.I(
+                    id="inclusion_criteria_info",
+                    className="fa-regular fa-circle-question",
+                    style={
+                        'text-align': 'center',
+                        'font-size': '12px',
+                        'color': '#002C38',
+                        'right': '-14px', 'top': '-2px',
+                        'position': 'absolute'
+                    },
+                ),
+                inclusion_criteria_popover
+            ], className="position-relative"),
             dcc.Graph(
                 id="inclusion_graph",
             config={

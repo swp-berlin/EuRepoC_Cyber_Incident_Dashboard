@@ -48,11 +48,11 @@ def inclusion_criteria_graph_callback(app, df=None, states_codes=None):
 
             try:
                 attacks_non_state = inclusion_grouped.loc[
-                    inclusion_grouped['inclusion_criteria'] == 'Attack conducted by non-state group/actor with political goals',
+                    inclusion_grouped['inclusion_criteria'] == 'Attack conducted by<br>non-state actors with political goals',
                     'ID'
                 ].values[0]
                 attacks_state = inclusion_grouped.loc[
-                    inclusion_grouped['inclusion_criteria'] == 'Attack conducted by a state-affiliated group (“cyber-proxies”)',
+                    inclusion_grouped['inclusion_criteria'] == 'Attack conducted by<br>a state-affiliated group',
                     'ID'
                 ].values[0]
 
@@ -61,7 +61,7 @@ def inclusion_criteria_graph_callback(app, df=None, states_codes=None):
                 attacks_state = None
 
             if attacks_state:
-                mask = inclusion_grouped['inclusion_criteria'] == 'Attack conducted by non-state group/actor with political goals'
+                mask = inclusion_grouped['inclusion_criteria'] == 'Attack conducted by<br>non-state actors with political goals'
                 inclusion_grouped.loc[mask, 'ID'] = attacks_non_state - attacks_state
             inclusion_grouped = inclusion_grouped.sort_values(by="ID", ascending=True).reset_index(drop=True)
             inclusion_grouped = inclusion_grouped[~inclusion_grouped['inclusion_criteria'].str.contains('Not available')]

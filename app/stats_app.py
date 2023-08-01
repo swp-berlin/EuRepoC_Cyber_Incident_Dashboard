@@ -6,7 +6,8 @@ import dash_cytoscape as cyto
 import numpy as np
 import pickle
 from datetime import date
-from layout.layout import full_layout
+from datetime import datetime as dt
+from layout.layout import serve_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
 from server.main_callbacks import reset_button_callback, tab_change_callback
 from server.common_callbacks import clear_selected_click_data_callback, \
@@ -25,17 +26,18 @@ from server.tab6_attributions_callbacks import attributions_title_callback, attr
 from server.tab7_responses_callbacks import responses_title_callback, responses_graph_callback, responses_datatable_callback
 from server.tab8_initiators_callbacks import initiators_title_callback, initiators_graph_callback, \
     initiators_text_selection_callback, initiators_datatable_callback
-from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import timezone
+from server.server_functions import filter_datatable
+#from apscheduler.schedulers.background import BackgroundScheduler
+#from pytz import timezone
 
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
 
 def global_update():
-    global today, database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
+    global database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
     timeline_data, types_data, sectors_data, attributions_data, responses_data, initiators_data
 
-    today = date.today()
+    #today = date.today()
 
     # TABLES
     database = pd.read_csv("./data/eurepoc_dataset.csv")
@@ -90,16 +92,16 @@ def global_update():
 
 global_update()
 
-scheduler = BackgroundScheduler()
-scheduler.start()
+#scheduler = BackgroundScheduler()
+#scheduler.start()
 
-scheduler.add_job(
-    func=global_update,
-    trigger="cron",
-    hour=13,
-    minute=0,
-    timezone=timezone("UTC")
-)
+#scheduler.add_job(
+ #   func=global_update,
+  #  trigger="cron",
+   # hour=13,
+    #minute=0,
+    #timezone=timezone("UTC")
+#)
 
 cyto.load_extra_layouts()
 
@@ -138,6 +140,32 @@ app = Dash(
 
 
 # ------------------ CALLBACKS ------------------
+
+app.clientside_callback(
+    """
+    function(status) {
+        if (window.innerWidth <= 576) {
+            return (status === "true");
+        }
+        else {
+            return false;
+        }
+    }
+    """,
+    Output('mobile_modal', 'is_open'),
+    Input('modal-status', 'children')
+)
+
+@app.callback(
+    Output('modal-status', 'children'),
+    Input('close', 'n_clicks'),
+)
+def close_modal(n):
+    if n is not None:
+        return "false"
+    return "true"
+
+
 reset_button_callback(app)
 tab_change_callback(app)
 
@@ -147,53 +175,44 @@ tab_change_callback(app)
     Input(component_id='initiator_country_dd', component_property='value'),
     Input(component_id='incident_type_dd', component_property='value'),
     Input(component_id='date-picker-range', component_property='start_date'),
-    Input(component_id='date-picker-range', component_property='end_date')
+    Input(component_id='date-picker-range', component_property='end_date'),
+    Input(component_id='interval-component', component_property='n_intervals'),
 )
 def update_plot(input_receiver_country,
                 input_initiator_country,
                 input_incident_type,
                 start_date_start,
-                start_date_end):
-
-    # Ensure the DataFrame is not overwritten
-    copied_data = map_data.copy(deep=True)
-
-    # Convert input dates to datetime
-    date_range = pd.date_range(start=start_date_start, end=start_date_end)
+                start_date_end,
+                n):
 
     if input_initiator_country == "All countries":
         input_initiator_country = None
     if input_incident_type == "All":
         input_incident_type = None
 
-    # Define input filters in dictionary
-    input_filters = {
-        'filter_column': input_receiver_country,
-        'initiator_country': input_initiator_country,
-        'incident_type': input_incident_type,
-    }
+    filtered_df = filter_datatable(
+        df=database,
+        receiver_country_filter=input_receiver_country,
+        initiator_country_filter=input_initiator_country,
+        incident_type_filter=input_incident_type,
+        start_date=start_date_start,
+        end_date=start_date_end,
+        states_codes=states_codes,
+        types_clickdata=None,
+        targets_clickdata=None,
+        initiators_clickdata=None,
+    )
 
-    # Filter the data based on input dates and filters
-    filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
-
-    for col, val in input_filters.items():
-        if val is not None:
-            filtered_df = filtered_df.loc[filtered_df[col] == val]
+    filtered_df['weighted_cyber_intensity'] = pd.to_numeric(filtered_df['weighted_cyber_intensity'])
 
     # If the filtered DataFrame is empty indicate 0 incidents and empty map which still shows the selected country
     if filtered_df.empty:
         nb_incidents = 0
         average_intensity = 0
+
     else:
         nb_incidents = filtered_df['ID'].nunique()
-        average_intensity = round(filtered_df['weighted_cyber_intensity'].mean(), 1)
-
-    if input_receiver_country == "Global (states)" \
-            and input_initiator_country is None \
-            and input_incident_type is None \
-            and start_date_start == "2000-01-01" \
-            and start_date_end == today.strftime(format="%Y-%m-%d"):
-        nb_incidents = copied_data['ID'].nunique() - 1
+        average_intensity = round(filtered_df['weighted_cyber_intensity'].mean(), 2)
 
     metric_values = {
         'nb_incidents': nb_incidents,
@@ -201,7 +220,6 @@ def update_plot(input_receiver_country,
     }
 
     return metric_values
-
 
 # TAB 1
 map_title_callback(app)
@@ -371,8 +389,8 @@ clear_selected_click_data_callback(
 )
 
 server = app.server
-app.layout = full_layout
+app.layout = serve_layout
 
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0")
+    app.run_server(host="0.0.0.0", debug="True")

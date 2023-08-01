@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+from datetime import datetime as dt
 
 
 def filter_database_by_output(
@@ -13,6 +14,10 @@ def filter_database_by_output(
 
     copied_data = df.copy(deep=True)
     date_range = pd.date_range(start=date_start, end=date_end)
+
+    if date_start == "2000-01-01" and date_end == str(dt.now().date()):
+        date_start = None
+        date_end = None
 
     region_filter = None
 
@@ -40,7 +45,10 @@ def filter_database_by_output(
         'incident_type': incident_type,
     }
 
-    filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
+    if date_start is None and date_end is None:
+        filtered_df = copied_data
+    else:
+        filtered_df = copied_data.loc[copied_data['start_date'].isin(date_range)]
 
     if region_filter is not None:
         filtered_df = filtered_df[filtered_df['receiver_region'].str.contains(region_filter)]
@@ -68,8 +76,11 @@ def filter_datatable(
     # Copy DataFrame and fill missing values with empty strings
     copied_df = df.copy(deep=True)
     copied_df = copied_df.fillna("").astype(str)
-    copied_df['start_date'] = pd.to_datetime(copied_df['start_date'])
+    copied_df["start_date"] = pd.to_datetime(copied_df["start_date"], format="%Y-%m-%d")
     #date_range = pd.date_range(start=start_date, end=end_date)
+    if start_date == "2000-01-01" and end_date == str(dt.now().date()):
+        start_date = None
+        end_date = None
 
     # Set region_filter to None
     region_filter = None
@@ -97,9 +108,12 @@ def filter_datatable(
         'incident_type': incident_type_filter,
     }
 
-    filtered_data = copied_df[
-        (copied_df['start_date'] >= start_date) & (copied_df['start_date'] <= end_date)
-        ]
+    if start_date is None and end_date is None:
+        filtered_data = copied_df
+    else:
+        filtered_data = copied_df[
+            (copied_df['start_date'] >= start_date) & (copied_df['start_date'] <= end_date)
+            ]
 
     if region_filter is not None:
         filtered_data = filtered_data[filtered_data['receiver_region'].str.contains(region_filter, regex=True)]

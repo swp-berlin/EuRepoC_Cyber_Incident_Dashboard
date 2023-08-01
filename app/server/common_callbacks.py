@@ -209,10 +209,16 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                                  f"{'; '.join(list(set(incident['source_incident_detection_disclosure'])))}"]),
                          html.P([html.Span("Inclusion Criteria: ", style={"font-weight": "bold"}),
                                  f"{'<br>'.join(incident['inclusion_criteria'])}"]),
-                         html.P([
-                             html.Span("Sources URL: ", style={"font-weight": "bold"}),
-                             html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
-                         ]),
+                         html.P(
+                             html.Details([
+                                 html.Summary("Sources (URLs):", style={"font-weight": "bold"}),
+                                 html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
+                             ])
+                         ),
+                         #html.P([
+                          #   html.Span("Sources URL: ", style={"font-weight": "bold"}),
+                           #  html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
+                         #]),
                          html.P([html.Span("Added to database: ", style={"font-weight": "bold"}),
                                  f"{incident['added_to_DB']}"]),
                          html.P([html.Span("Last updated: ", style={"font-weight": "bold"}),
@@ -236,21 +242,25 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                         [attribution_text[i] for i in range(len(attribution_text))],
                         title="Attribution(s)"
                     ),
-                    dbc.AccordionItem(
-                        [html.P([html.Span("Impact indicator: ", style={"font-weight": "bold"}),
+                    dbc.AccordionItem([
+                       html.P([html.Span("Overall impact score: ", style={"font-weight": "bold"}),
                                  f"{incident['impact_indicator']} - {incident['impact_indicator_value']}"]),
-                         html.P([html.Span("Functional impact: ", style={"font-weight": "bold"}),
-                                 f"{incident['functional_impact']}"]),
+                         html.P([
+                             html.Span("↳"),
+                             html.Span([
+                                 html.Span("Functional impact: ", style={"font-weight": "bold"}),
+                                 f"{incident['functional_impact']}"
+                             ], style={"padding-left": "10px"})
+                         ]),
                          html.P([html.Span("Intelligence impact: ", style={"font-weight": "bold"}),
-                                 f"{incident['intelligence_impact']}"]),
+                                 f"{incident['intelligence_impact']}"], style={"padding-left": "24px"}),
                          html.P([html.Span("Political impact (Affected entities): ", style={"font-weight": "bold"}),
-                                 f"{incident['political_impact_affected_entities']}"]),
+                                 f"{incident['political_impact_affected_entities']}"], style={"padding-left": "24px"}),
                          html.P([html.Span("Political impact (Third countries): ", style={"font-weight": "bold"}),
-                                 f"{incident['political_impact_third_countries']}"]),
+                                 f"{incident['political_impact_third_countries']}"], style={"padding-left": "24px"}),
                          html.P([html.Span("Economic impact: ", style={"font-weight": "bold"}),
-                                 f"{incident['economic_impact']}"])],
-                        title="Impact Indicator"
-                    ),
+                                 f"{incident['economic_impact']}"], style={"padding-left": "24px"})
+                    ], title="Impact Indicator"),
                     dbc.AccordionItem(
                         [html.P(
                             [html.Span("Data theft: ", style={"font-weight": "bold"}),

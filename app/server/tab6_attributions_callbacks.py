@@ -15,8 +15,8 @@ def attributions_title_callback(app):
         Input('receiver_country_dd', 'value'),
         Input('initiator_country_dd', 'value'),
         Input('incident_type_dd', 'value'),
-        Input('date-picker-range_attributions', 'start_date'),
-        Input('date-picker-range_attributions', 'end_date'),
+        Input('date-picker-range', 'start_date'),
+        Input('date-picker-range', 'end_date'),
     )
     def selection_text_output(receiver_country,
                               initiator_country,
@@ -57,8 +57,8 @@ def attributions_graph_callback(app, df=None, states_codes=None):
         Input('receiver_country_dd', 'value'),
         Input('initiator_country_dd', 'value'),
         Input('incident_type_dd', 'value'),
-        Input('date-picker-range_attributions', 'start_date'),
-        Input('date-picker-range_attributions', 'end_date'),
+        Input('date-picker-range', 'start_date'),
+        Input('date-picker-range', 'end_date'),
     )
     def update_timeline(input_receiver_country,
                         input_initiator_country,
@@ -403,8 +403,8 @@ def attributions_datatable_callback(app, df=None, states_codes=None, data_dict=N
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id="incident_type_dd", component_property='value'),
-        Input(component_id='date-picker-range_attributions', component_property='start_date'),
-        Input(component_id='date-picker-range_attributions', component_property='end_date'),
+        Input(component_id='date-picker-range', component_property='start_date'),
+        Input(component_id='date-picker-range', component_property='end_date'),
         Input(component_id="attributions_graph", component_property="clickData"),
         Input(component_id="attributions_datatable", component_property='derived_virtual_data'),
         Input(component_id="attributions_datatable", component_property='active_cell'),
@@ -484,9 +484,11 @@ def attributions_datatable_callback(app, df=None, states_codes=None, data_dict=N
                          for column, value in row.items()}
                         for row in data]
 
+        copied_data_dict = data_dict.copy()
+        copied_index = index.copy()
         status, modal = create_modal_text(
-            data=data_dict,
-            index=index,
+            data=copied_data_dict,
+            index=copied_index,
             derived_virtual_data=derived_virtual_data,
             active_cell=active_cell,
             page_current=page_current,
@@ -503,8 +505,8 @@ def attributions_text_selection_callback(app):
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id='incident_type_dd', component_property='value'),
-        Input(component_id='date-picker-range_attributions', component_property='start_date'),
-        Input(component_id='date-picker-range_attributions', component_property='end_date')
+        Input(component_id='date-picker-range', component_property='start_date'),
+        Input(component_id='date-picker-range', component_property='end_date')
     )
     def update_table(clickData,
                      receiver_country_filter,
@@ -512,8 +514,8 @@ def attributions_text_selection_callback(app):
                      incident_type_filter,
                      start_date_start,
                      start_date_end):
-        if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range_attributions.start_date' \
-                or ctx.triggered[0]['prop_id'] == 'date-picker-range_attributions.end_date' \
+        if ctx.triggered and ctx.triggered[0]['prop_id'] == 'date-picker-range.start_date' \
+                or ctx.triggered[0]['prop_id'] == 'date-picker-range.end_date' \
                 or ctx.triggered[0]['prop_id'] == 'initiator_country_dd.value' \
                 or ctx.triggered[0]['prop_id'] == 'receiver_country_dd.value' \
                 or ctx.triggered[0]['prop_id'] == 'incident_type_dd.value':

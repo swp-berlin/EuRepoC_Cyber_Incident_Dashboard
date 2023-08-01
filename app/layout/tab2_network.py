@@ -22,6 +22,7 @@ default_stylesheet = [
         'selector': 'node',
         'style': {
             'label': 'data(flag)',
+            'font-size': '22px',
             'background-color': '#002C38',
             'width': '30px',
             'height': '30px',
@@ -33,7 +34,7 @@ default_stylesheet = [
 modal_network = dbc.Modal([
     dbc.ModalHeader(html.H3('Incident details')),
     dbc.ModalBody(id='modal_network_content'),
-], id='modal_network', size='lg')
+], id='modal_network', size='xl', centered=True, scrollable=True)
 
 
 network_tab = dbc.Container(
