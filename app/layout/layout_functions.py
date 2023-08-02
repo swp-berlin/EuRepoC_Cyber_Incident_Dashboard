@@ -122,7 +122,7 @@ def create_table(
         columns=columns,
         hidden_columns=["ID"],
         sort_action="native",
-        sort_mode="multi",
+        sort_mode="single",
         page_action="native",
         page_current=0,
         page_size=12,

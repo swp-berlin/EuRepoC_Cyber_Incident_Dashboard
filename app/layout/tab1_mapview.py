@@ -66,7 +66,7 @@ map_tab = dbc.Row([
                         dbc.CardBody([
                             html.Div([
                                 html.I(
-                                    className="fa-solid fa-user-group",
+                                    className="fa-solid fa-user-secret",
                                     style={'font-size': '25px', 'color': '#CC0130', 'display': 'inline-block'}),
                                 html.H3(id="nb_threat_groups", style={'display': 'inline-block', 'margin-left': '5px'}),
                             ]),

@@ -57,19 +57,24 @@ def initiators_graph_callback(app, df=None, states_codes=None):
         Output('initiators_graph', 'figure'),
         Output('initiators_graph_2', 'figure'),
         Output('initiators_description_text', 'children'),
+        Output("nb_threat_groups_initiators", 'children'),
         Input('receiver_country_dd', 'value'),
         Input('initiator_country_dd', 'value'),
         Input('incident_type_dd', 'value'),
         Input('date-picker-range', 'start_date'),
         Input('date-picker-range', 'end_date'),
-        Input("initiators_graph", "clickData")
+        Input("initiators_graph", "clickData"),
+        Input("nb_threat_groups_data", "data"),
+
     )
     def update_timeline(input_receiver_country,
                         input_initiator_country,
                         incident_type,
                         start_date_start,
                         start_date_end,
-                        clickData):
+                        clickData,
+                        nb_threat_groups
+                        ):
 
         if input_initiator_country == "All countries":
             input_initiator_country = None
@@ -90,19 +95,23 @@ def initiators_graph_callback(app, df=None, states_codes=None):
             fig = empty_figure(height_value=300)
             fig_2 = empty_figure(height_value=300)
             text = html.Div(html.P("No cyber incidents corresponding to the selected criteria."))
+            number_of_groups = 0
 
         else:
             grouped_df = filtered_df.groupby(['initiator_category'])["ID"].nunique().reset_index()
             grouped_df = grouped_df.sort_values(by=['ID'], ascending=True)
-
             grouped_df_2 = filtered_df.groupby(['initiator_category', "initiator_name"])["ID"].nunique().reset_index()
             grouped_df_2['initiator_name'] = grouped_df_2['initiator_name'].apply(
                 lambda x: re.match(r'([^/]*/[^/]*)/.*', x).group(1) if re.match(r'([^/]*/[^/]*)/.*', x) else x)
             top5_initiators = grouped_df_2.groupby('initiator_category').apply(
                 lambda x: x.nlargest(10, 'ID')).reset_index(drop=True)
 
+            number_of_groups = nb_threat_groups
+
             if clickData:
                 selected_type = clickData["points"][0]["label"]
+
+                number_of_groups = filtered_df[filtered_df['initiator_category'] == selected_type]['initiator_name'].nunique()
 
                 colors = ['#002C38' if x != selected_type else '#cc0130' for x in grouped_df['initiator_category']]
 
@@ -132,7 +141,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                         size=14
                     ),
                     margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=450,
+                    height=459,
                     dragmode=False
                 )
 
@@ -144,6 +153,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                             header=dict(
                                 values=['Initiator name', 'Number of incidents'],
                                 fill_color='#002C38',
+                                align='left',
                                 font=dict(
                                     family="Lato",
                                     color="white",
@@ -154,6 +164,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                             cells=dict(
                                 values=[top5_initiators_filtered["initiator_name"], top5_initiators_filtered["ID"]],
                                 fill_color='#F2F2F2',
+                                align='left',
                                 font=dict(
                                     family="Lato",
                                     color="#002C38",
@@ -173,7 +184,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                         size=11,
                     ),
                     margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=450,
+                    height=459,
                     dragmode=False
                 )
             else:
@@ -203,11 +214,12 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                         size=14
                     ),
                     margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=450,
+                    height=459,
                     dragmode=False
                 )
 
-                top_10_data = grouped_df_2.sort_values(by=['ID'], ascending=False).head(10)
+                top_10_data = grouped_df_2.groupby('initiator_name')["ID"].sum().reset_index()
+                top_10_data = top_10_data.sort_values(by=['ID'], ascending=False).head(10)
 
                 fig_2 = go.Figure(
                     data=[
@@ -215,6 +227,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                             header=dict(
                                 values=['Initiator name', 'Number of incidents'],
                                 fill_color='#002C38',
+                                align='left',
                                 font=dict(
                                     family="Lato",
                                     color="white",
@@ -225,6 +238,7 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                             cells=dict(
                                 values=[top_10_data["initiator_name"], top_10_data["ID"]],
                                 fill_color='#F2F2F2',
+                                align='left',
                                 font=dict(
                                     family="Lato",
                                     color="#002C38",
@@ -245,19 +259,19 @@ def initiators_graph_callback(app, df=None, states_codes=None):
                         size=11,
                     ),
                     margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=450,
+                    height=459,
                     dragmode=False
                 )
 
             text = html.Div([
                     html.P([
-                        html.Span("For the selected filters, "),
-                        html.Span(f"{grouped_df.iloc[-1]['initiator_category'].lower()} ", style={"font-weight": "bold"}),
-                        html.Span(f"is the most common type of initiator, with {grouped_df.iloc[-1]['ID']} incidents.")
+                        html.Span("For the selected filters, the actors categorised as "),
+                        html.Span(f""""{grouped_df.iloc[-1]['initiator_category'].lower()}", """, style={"font-weight": "bold"}),
+                        html.Span(f" are the most common type of initiators of cyber incidents, with a total of {grouped_df.iloc[-1]['ID']} incident(s).")
                     ])
             ])
 
-        return fig, fig_2, text
+        return fig, fig_2, text, number_of_groups
 
 
 def initiators_text_selection_callback(app):

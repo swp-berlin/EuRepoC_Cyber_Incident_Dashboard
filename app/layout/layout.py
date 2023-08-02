@@ -60,11 +60,12 @@ def serve_layout():
                 ),
             dbc.Row([
                 dcc.Store(id='metric_values'),
-                dcc.Store(id='prev-receiver-country'),
-                dcc.Store(id='prev-initiator-country'),
-                dcc.Store(id='prev-incident-type'),
-                dcc.Store(id='prev-start-date'),
-                dcc.Store(id='prev-end-date'),
+                dcc.Store(id='nb_threat_groups_data'),
+                #dcc.Store(id='prev-receiver-country'),
+                #dcc.Store(id='prev-initiator-country'),
+                #dcc.Store(id='prev-incident-type'),
+                #dcc.Store(id='prev-start-date'),
+                #dcc.Store(id='prev-end-date'),
             ]),
 
             #*make_break(2),

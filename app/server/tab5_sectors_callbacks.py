@@ -49,6 +49,7 @@ def sectors_graph_callback(app, df=None, states_codes=None):
     @app.callback(
         Output("sectors_graph", "figure"),
         Output("top_sector_store", "data"),
+        Input(component_id='clear_sectors_click_data', component_property='n_clicks'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
         Input(component_id='incident_type_dd', component_property='value'),
@@ -56,6 +57,7 @@ def sectors_graph_callback(app, df=None, states_codes=None):
         Input(component_id='date-picker-range', component_property='end_date'),
     )
     def update_main_targets(
+            n_clicks,
             receiver_country_filter,
             initiator_country,
             incident_type,
@@ -78,11 +80,10 @@ def sectors_graph_callback(app, df=None, states_codes=None):
             states_codes=states_codes
         )
 
-        print(filtered_df.head(10))
 
         if filtered_df.empty:
-            fig = empty_figure(height_value=500)
-            return fig, {}
+            sectors_plot = empty_figure(height_value=500)
+            top_sector = {}
 
         else:
 
@@ -130,6 +131,9 @@ def sectors_graph_callback(app, df=None, states_codes=None):
                 margin=dict(l=0, r=0, t=25, b=0, pad=0),
                 height=500,
             )
+
+            if n_clicks:
+                sectors_plot = sectors_plot
 
         return sectors_plot, top_sector
 

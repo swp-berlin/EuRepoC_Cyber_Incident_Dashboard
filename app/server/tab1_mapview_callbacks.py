@@ -78,6 +78,7 @@ def metric_values_callback(app):
 def map_callback(app, df=None, geometry=None):
     @app.callback(
         Output(component_id='nb_threat_groups', component_property='children'),
+        Output(component_id='nb_threat_groups_data', component_property='data'),
         Output(component_id='map', component_property='figure'),
         Input(component_id='receiver_country_dd', component_property='value'),
         Input(component_id='initiator_country_dd', component_property='value'),
@@ -277,4 +278,4 @@ def map_callback(app, df=None, geometry=None):
                           'Number of incidents: %{customdata}'
         )
 
-        return number_of_groups, fig
+        return number_of_groups, number_of_groups, fig

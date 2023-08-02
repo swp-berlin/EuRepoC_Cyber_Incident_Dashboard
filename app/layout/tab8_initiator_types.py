@@ -12,6 +12,15 @@ mean_intensity_initiators_popover = generate_intensity_popover(target_id="mean_i
 mean_intensity_initiators_popover_icon = generate_text_with_popover_icon(
     text="Mean intensity", span_id="mean_intensity_initiators_info", popover=mean_intensity_initiators_popover)
 
+threat_groups_popover = dbc.Popover([
+        dbc.PopoverBody([
+            "This is the number of known actors/groups having initiated cyber incidents recorded in our database \
+            for your current selection."
+        ]),
+    ], target="threat_groups_info", trigger="hover")
+
+threat_groups_popover_icon = generate_text_with_popover_icon(
+    text="Threat groups", span_id="threat_groups_info", popover=threat_groups_popover)
 
 initiators_tab = dbc.Container(
     dbc.Row([
@@ -34,7 +43,7 @@ initiators_tab = dbc.Container(
                             config={
                                 **CONFIG,
                             },
-                            style={'height': '450px'}
+                            style={'height': '460px'}
                         )
                     ], style={'border-right': '1px solid #e6eaeb'}, sm=12, xs=12, md=12, lg=7, xl=7, xxl=7),
                     dbc.Col([
@@ -43,7 +52,7 @@ initiators_tab = dbc.Container(
                             config={
                                 **CONFIG,
                             },
-                            style={'height': '450px'}
+                            style={'height': '460px'}
                         )
                     ], sm=12, xs=12, md=12, lg=5, xl=5, xxl=5)
                 ]),
@@ -85,6 +94,21 @@ initiators_tab = dbc.Container(
                 dbc.Row([
                     dbc.Col([
                         dbc.Card([
+                            dbc.CardBody([
+                                html.Div([
+                                    html.I(
+                                        className="fa-solid fa-user-secret",
+                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
+                                        html.B(id="nb_threat_groups_initiators", style={'display': 'inline-block', 'margin-left': '5px'}),
+                                ]),
+                                threat_groups_popover_icon,
+                            ], style={'padding': '5px 0px 15px 5px'}),
+                        ], style={'padding': '0px', 'margin': '0px'}),
+                    ], width=6, style={'margin-top': '20px', 'margin-left': '25%', 'margin-right': '25%'}),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Card([
                             dbc.CardHeader([
                                 html.P([
                                     html.I(
@@ -118,7 +142,7 @@ initiators_tab = dbc.Container(
                         )
                     ], style={"text-align": "center"}),
                 ]),
-            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3, align="center"),
+            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
         ]),
         dbc.Row([
             dbc.Col([

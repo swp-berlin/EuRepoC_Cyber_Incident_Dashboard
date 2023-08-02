@@ -107,7 +107,7 @@ responses_tab = dbc.Container(
                         ])
                     ], style={'margin-top': '20px'}),
                 ]),
-            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3, align="center"),
+            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
         ]),
         dbc.Row([
             dbc.Col([
