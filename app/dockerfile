@@ -1,5 +1,22 @@
 FROM python:3.10-slim
+
+# Create a group and user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+RUN mkdir -p /app
+WORKDIR /app
+
+# Copy requirements and install dependencies
 COPY requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
+
+# Copy the rest of your application
 COPY . ./
+
+# Change ownership of the application files to appuser
+RUN chown -R appuser:appuser /app
+
+# Use the new user to run the application
+USER appuser
+
 EXPOSE 8080

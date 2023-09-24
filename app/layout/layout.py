@@ -4,42 +4,18 @@ from layout.layout_functions import make_break
 from layout.sidebar import generate_sidebar
 
 
-mobile_modal = html.Div(
-    [
-        dbc.Modal(
-            [
-                dbc.ModalHeader(dbc.ModalTitle("Mobile device notice")),
-                dbc.ModalBody([
-                    "Welcome to our Cyber Incident Dashboard!",
-                    html.Br(),
-                    "For best results, please view the dashboard on a ",
-                    html.B("desktop device"),
-                    "."
-                ]),
-                dbc.ModalFooter(
-                    dbc.Button("Continue", id="close", className="ml-auto")
-                ),
-            ],
-            id="mobile_modal",
-            centered=True,
-            is_open=False,
-        ),
-        html.Div(id='modal-status', style={'display': 'none'}, children="true")
-    ]
-)
-
 card_tabs = dbc.Row([
     dbc.Col([
         dbc.Tabs(
             [
-                dbc.Tab(label="Overview", tab_id="tab-1", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Conflict dyads", tab_id="tab-2", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Timeline", tab_id="tab-3", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Incident types", tab_id="tab-4", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Targeted sectors", tab_id="tab-5", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Attributions", tab_id="tab-6", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Responses", tab_id="tab-7", tab_style={"marginRight": "auto"}),
-                dbc.Tab(label="Initiator types", tab_id="tab-8", tab_style={"marginRight": "auto"}),
+                dbc.Tab(label="Overview", tab_id="tab-1"),
+                dbc.Tab(label="Conflict dyads", tab_id="tab-2"),
+                dbc.Tab(label="Timeline", tab_id="tab-3"),
+                dbc.Tab(label="Incident types", tab_id="tab-4"),
+                dbc.Tab(label="Targeted sectors", tab_id="tab-5"),
+                dbc.Tab(label="Attributions", tab_id="tab-6"),
+                dbc.Tab(label="Responses", tab_id="tab-7"),
+                dbc.Tab(label="Initiator types", tab_id="tab-8"),
             ],
             id="card-tabs",
             active_tab="tab-1",
@@ -52,7 +28,6 @@ card_tabs = dbc.Row([
 def serve_layout():
     full_layout = dbc.Container(
         children=[
-            mobile_modal,
             dcc.Interval(
                     id='interval-component',
                     interval=1 * 1000,  # in milliseconds

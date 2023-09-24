@@ -5,8 +5,8 @@ import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
-from datetime import date
-from datetime import datetime as dt
+from flask_limiter.util import get_remote_address
+from flask_limiter import Limiter
 from layout.layout import serve_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
 from server.main_callbacks import reset_button_callback, tab_change_callback
@@ -27,8 +27,6 @@ from server.tab7_responses_callbacks import responses_title_callback, responses_
 from server.tab8_initiators_callbacks import initiators_title_callback, initiators_graph_callback, \
     initiators_text_selection_callback, initiators_datatable_callback
 from server.server_functions import filter_datatable
-#from apscheduler.schedulers.background import BackgroundScheduler
-#from pytz import timezone
 
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
@@ -36,8 +34,6 @@ from server.server_functions import filter_datatable
 def global_update():
     global database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
     timeline_data, types_data, sectors_data, attributions_data, responses_data, initiators_data
-
-    #today = date.today()
 
     # TABLES
     database = pd.read_csv("./data/eurepoc_dataset.csv")
@@ -92,17 +88,6 @@ def global_update():
 
 global_update()
 
-#scheduler = BackgroundScheduler()
-#scheduler.start()
-
-#scheduler.add_job(
- #   func=global_update,
-  #  trigger="cron",
-   # hour=13,
-    #minute=0,
-    #timezone=timezone("UTC")
-#)
-
 cyto.load_extra_layouts()
 
 states_codes = {
@@ -140,21 +125,6 @@ app = Dash(
 
 
 # ------------------ CALLBACKS ------------------
-
-app.clientside_callback(
-    """
-    function(status) {
-        if (window.innerWidth <= 576) {
-            return (status === "true");
-        }
-        else {
-            return false;
-        }
-    }
-    """,
-    Output('mobile_modal', 'is_open'),
-    Input('modal-status', 'children')
-)
 
 @app.callback(
     Output('modal-status', 'children'),
@@ -391,6 +361,12 @@ clear_selected_click_data_callback(
 server = app.server
 app.layout = serve_layout
 
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["120 per minute"]  # Set your desired rate limit
+)
+limiter.init_app(server)  # Initializing limiter with the Flask instance
+
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", debug="True")
+    app.run_server(host="0.0.0.0")
