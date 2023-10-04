@@ -5,11 +5,9 @@ import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
-from flask_limiter.util import get_remote_address
-from flask_limiter import Limiter
 from layout.layout import serve_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
-from server.main_callbacks import reset_button_callback, tab_change_callback
+from server.main_callbacks import reset_button_callback, tab_change_callback, change_network_tab, change_attributions_tab, change_responses_tab
 from server.common_callbacks import clear_selected_click_data_callback, \
     clear_active_cell_datatables_callback
 from server.tab1_inclusion_criteria_callbacks import inclusion_criteria_graph_callback
@@ -22,18 +20,21 @@ from server.tab4_types_callbacks import types_title_callback, types_graph_callba
 from server.tab5_sectors_callbacks import sectors_title_callback, sectors_graph_callback, \
     sectors_text_selection_callback, sectors_datatable_callback
 from server.tab6_attributions_callbacks import attributions_title_callback, attributions_graph_callback, \
-    attributions_datatable_callback, attributions_text_selection_callback
-from server.tab7_responses_callbacks import responses_title_callback, responses_graph_callback, responses_datatable_callback
+    attributions_datatable_callback, attributions_text_selection_callback, attributions_question_title
+from server.tab7_responses_callbacks import responses_title_callback, responses_graph_callback, responses_datatable_callback, responses_question_title
 from server.tab8_initiators_callbacks import initiators_title_callback, initiators_graph_callback, \
     initiators_text_selection_callback, initiators_datatable_callback
 from server.server_functions import filter_datatable
-
+from server.tab2_network_bar_graph_callbacks import network_bar_graph_callback, network_bar_text_selection_callback, network_bar_datatable_callback
+from server.tab6_attributions_types_callbacks import attributions_graph_callback_types, attributions_datatable_callback_types, attributions_text_selection_callback_types
+from server.tab7_responses_type_callbacks import responses_graph_callback_types, responses_datatable_callback_types
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
 
 def global_update():
     global database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
-    timeline_data, types_data, sectors_data, attributions_data, responses_data, initiators_data
+    timeline_data, types_data, sectors_data, attributions_data, attributions_basis, responses_data, responses_details, \
+    initiators_data
 
     # TABLES
     database = pd.read_csv("./data/eurepoc_dataset.csv")
@@ -76,11 +77,15 @@ def global_update():
 
     # ATTRIBUTIONS
     attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
+    attributions_basis = pd.read_csv("./data/dashboard_attributions_basis_data.csv")
     attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
+    attributions_basis["start_date"] = pd.to_datetime(attributions_basis["start_date"])
 
     # RESPONSES
     responses_data = pd.read_csv("./data/dashboard_responses_data.csv")
     responses_data["start_date"] = pd.to_datetime(responses_data["start_date"])
+    responses_details = pd.read_csv("./data/dashboard_responses_details_data.csv")
+    responses_details["start_date"] = pd.to_datetime(responses_details["start_date"])
 
     # INITIATORS
     initiators_data = pd.read_csv("./data/dashboard_initiators_data.csv")
@@ -198,6 +203,7 @@ inclusion_criteria_graph_callback(app, df=inclusion_data, states_codes=states_co
 metric_values_callback(app)
 
 # TAB 2
+change_network_tab(app)
 network_title_callback(app)
 network_graph_callback(app, df=network, states_codes=states_codes)
 style_node_onclick_callback(app)
@@ -221,6 +227,29 @@ clear_active_cell_datatables_callback(
     input_component_property="tapNode",
     input_id="cytoscape-graph"
 )
+
+network_bar_graph_callback(app, df=network, states_codes=states_codes)
+network_bar_text_selection_callback(app)
+network_bar_datatable_callback(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+clear_selected_click_data_callback(
+    app,
+    output_id="network-bar-graph",
+    output_component_property="clickData",
+    input_id="clear_network_bar_click_data"
+)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="network_datatable_graph",
+    input_component_property="tapNode",
+    input_id="network-bar-graph"
+)
+
 
 # TAB 3
 timeline_title_callback(app)
@@ -295,6 +324,8 @@ clear_active_cell_datatables_callback(
 
 
 # TAB 6
+change_attributions_tab(app)
+attributions_question_title(app)
 attributions_title_callback(app)
 attributions_graph_callback(app, df=attributions_data, states_codes=states_codes)
 attributions_text_selection_callback(app)
@@ -317,8 +348,31 @@ clear_active_cell_datatables_callback(
     input_component_property="clickData",
     input_id="attributions_graph")
 
+attributions_graph_callback_types(app, df=attributions_basis, states_codes=states_codes)
+attributions_text_selection_callback_types(app)
+attributions_datatable_callback_types(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+clear_selected_click_data_callback(
+    app,
+    output_id="attributions_graph_types",
+    output_component_property="clickData",
+    input_id="clear_attributions_click_data_types"
+)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="attributions_datatable_types",
+    input_component_property="clickData",
+    input_id="attributions_graph_types")
 
-# TAB 3
+
+# TAB 7
+responses_question_title(app)
+change_responses_tab(app)
 responses_title_callback(app)
 responses_graph_callback(app, df=responses_data, states_codes=states_codes)
 responses_datatable_callback(
@@ -333,6 +387,20 @@ clear_active_cell_datatables_callback(
     output_id="responses_datatable",
     input_component_property="clickData",
     input_id="responses_graph")
+
+responses_graph_callback_types(app, data=responses_details, states_codes=states_codes)
+responses_datatable_callback_types(
+    app,
+    df=database,
+    states_codes=states_codes,
+    data_dict=full_data_dict,
+    index=full_data_dict_index_map
+)
+clear_active_cell_datatables_callback(
+    app,
+    output_id="responses_datatable_types",
+    input_component_property="clickData",
+    input_id="responses_graph_types")
 
 
 # TAB 8
@@ -360,12 +428,6 @@ clear_selected_click_data_callback(
 
 server = app.server
 app.layout = serve_layout
-
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["120 per minute"]  # Set your desired rate limit
-)
-limiter.init_app(server)  # Initializing limiter with the Flask instance
 
 
 if __name__ == '__main__':

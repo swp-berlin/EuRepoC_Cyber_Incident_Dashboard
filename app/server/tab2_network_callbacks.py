@@ -11,15 +11,46 @@ import re
 
 country_flags = pickle.load(open("./data/country_flags.pickle", "rb"))
 
+eu_member_states = [
+        "Austria",
+        "Belgium",
+        "Bulgaria",
+        "Croatia",
+        "Cyprus",
+        "Czech Republic",
+        "Denmark",
+        "Estonia",
+        "Finland",
+        "France",
+        "Germany",
+        "Greece",
+        "Hungary",
+        "Ireland",
+        "Italy",
+        "Latvia",
+        "Lithuania",
+        "Luxembourg",
+        "Malta",
+        "Netherlands",
+        "Poland",
+        "Portugal",
+        "Romania",
+        "Slovakia",
+        "Slovenia",
+        "Spain",
+        "Sweden",
+        #"United Kingdom"
+    ]
 
 def construct_details(edge_type, node, text):
     node_details = html.Div([])
     if len(edge_type) > 0:
         for edge in edge_type:
+            threat_group = re.match(r'([^/]*/[^/]*)/.*', str(edge["initiator_name"])).group(1) if re.match(r'([^/]*/[^/]*)/.*', str(edge["initiator_name"])) else str(edge["initiator_name"])
             list_items = html.Ul([
                 html.Li("Number of incidents: " + str(edge["nb_incidents"])),
                 html.Li("Average cyber intensity: " + str(edge["cyber_intensity"])),
-                html.Li("Main threat group: " + str(edge["initiator_name"])),
+                html.Li("Main threat group: " + threat_group),
                 html.Li("Main type of initiators: " + str(edge["initiator_category"])),
                 html.Li(f"Main cyber issue: {edge['cyber_conflict_issue']}"),
             ])
@@ -34,16 +65,25 @@ def construct_details(edge_type, node, text):
 
 def network_title_callback(app):
     @app.callback(Output("network_title", 'children'),
-                  [Input('receiver_country_dd', 'value')])
-    def update_network_title(receiver_country):
-        if receiver_country == "Global (states)":
-            return html.Div([html.B("Main cyber conflict dyads across all countries")])
+                  [Input('receiver_country_dd', 'value'),
+                   Input("network-card-tabs", "active_tab")])
+    def update_network_title(receiver_country, active_tab):
+        if active_tab == "network_tab":
+            if receiver_country == "Global (states)":
+                return html.Div([html.B("Main cyber conflict dyads across all countries")])
+            else:
+                return html.Div([
+                    html.B(
+                        f"Main countries of origin of incidents against {receiver_country} and main countries targeted by initators in {receiver_country}"
+                    )
+                ])
         else:
-            return html.Div([
-                html.B(
-                    f"Main countries of origin of incidents against {receiver_country} and main countries targeted by initators in {receiver_country}"
-                )
-            ])
+            if receiver_country == "Global (states)":
+                return html.Div([html.B("Main countries of origin of cyber incidents")])
+            else:
+                return html.Div([
+                    html.B("Main countries of origin of cyber incidents against " + receiver_country)
+                ])
 
 
 def network_graph_callback(app, df=None, states_codes=None):
@@ -70,7 +110,7 @@ def network_graph_callback(app, df=None, states_codes=None):
         elif receiver_country == "EU (member states)":
             receiver_country = None
             region_filter = "EU\(MS\)"
-            head = 25
+            head = 30
         elif receiver_country == "NATO (member states)":
             receiver_country = None
             region_filter = "NATO"
@@ -131,6 +171,10 @@ def network_graph_callback(app, df=None, states_codes=None):
             )
 
             full_network["weight"] = (np.sqrt(full_network["ID_x"]) * full_network["weighted_cyber_intensity"])/2
+
+            if filtered_region == "EU\(MS\)":
+                full_network = full_network[full_network["receiver_country"].isin(eu_member_states)]
+
             full_network = full_network.sort_values(by="weight", ascending=False).head(table_head)
             full_network = full_network.sort_values(by="ID_x", ascending=False)
 

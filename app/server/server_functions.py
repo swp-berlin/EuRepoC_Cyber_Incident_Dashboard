@@ -71,6 +71,7 @@ def filter_datatable(
         types_clickdata=None,
         targets_clickdata=None,
         initiators_clickdata=None,
+        initiators_country_clickdata=None
 ):
 
     # Copy DataFrame and fill missing values with empty strings
@@ -140,6 +141,10 @@ def filter_datatable(
     if initiators_clickdata:
         point = initiators_clickdata["points"][0]["label"]
         filtered_data = filtered_data[filtered_data['initiator_category'].str.contains(point, regex=False)]
+
+    if initiators_country_clickdata:
+        point = initiators_country_clickdata["points"][0]["label"]
+        filtered_data = filtered_data[filtered_data['initiator_country'].str.contains(point, regex=False)]
 
     return filtered_data
 

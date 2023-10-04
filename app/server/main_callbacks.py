@@ -7,6 +7,12 @@ from layout.tab5_sectors import sectors_tab
 from layout.tab6_attributions import attributions_tab
 from layout.tab7_responses import responses_tab
 from layout.tab8_initiator_types import initiators_tab
+from layout.tab2_network_cyto_tab import network_cyto_tab
+from layout.tab2_initiator_bar_tab import network_bar_tab
+from layout.tab6_attribution_types_tab import attributions_tab_types
+from layout.tab6_attribution_speed_tab import attributions_tab_speed
+from layout.tab7_responses_nb_tab import responses_nb_tab
+from layout.tab7_responses_types import responses_types_tab
 from datetime import date
 from datetime import datetime as dt
 
@@ -60,3 +66,38 @@ def tab_change_callback(app):
             return responses_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-8":
             return initiators_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
+
+
+def change_network_tab(app):
+    @app.callback(
+        Output("network-card-content", "children"),
+        [Input("network-card-tabs", "active_tab")]
+    )
+    def tab_content(active_tab):
+        if active_tab == "network_tab":
+            return network_cyto_tab
+        else:
+            return network_bar_tab
+
+
+def change_attributions_tab(app):
+    @app.callback(
+        Output("attributions-card-content", "children"),
+        [Input("attributions-card-tabs", "active_tab")]
+    )
+    def tab_content(active_tab):
+        if active_tab == "timeline_tab":
+            return attributions_tab_speed
+        else:
+            return attributions_tab_types
+
+def change_responses_tab(app):
+    @app.callback(
+        Output("responses-card-content", "children"),
+        [Input("responses-card-tabs", "active_tab")]
+    )
+    def tab_content(active_tab):
+        if active_tab == "response_number_tab":
+            return responses_nb_tab
+        else:
+            return responses_types_tab

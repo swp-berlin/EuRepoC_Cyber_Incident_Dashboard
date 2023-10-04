@@ -264,10 +264,16 @@ attributions = tables.attributions_full_df.copy(deep=True)
 attributions = attributions.merge(start_date, on="ID", how="left")
 attributions["attribution_basis"] = attributions["attribution_basis"].fillna("None")
 attributions["attribution_basis"] = attributions["attribution_basis"].astype(str)
+attributions_bases = attributions.copy(deep=True)
 
 attributions["attribution_basis_clean"] = attributions["attribution_basis"].apply(
     lambda x: "Industry attribution" if x == "IT-security community attributes attacker" else x
 )
+
+attributions_bases["attribution_basis_clean"] = attributions_bases["attribution_basis"].apply(
+    lambda x: "Industry attribution" if x == "IT-security community attributes attacker" else x
+)
+
 attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"].apply(
     lambda x: "Political attribution" if x in [
         "Attribution by receiver government / state entity",
@@ -275,6 +281,15 @@ attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"
         "Attribution by international organization"
     ] else x
 )
+
+attributions_bases["attribution_basis_clean"] = attributions_bases["attribution_basis_clean"].apply(
+    lambda x: "Political attribution" if x in [
+        "Attribution by receiver government / state entity",
+        "Attribution by EU institution/agency",
+        "Attribution by international organization"
+    ] else x
+)
+
 attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"].apply(
     lambda x: "Other attribution basis" if x and x in [
         "Receiver attributes attacker",
@@ -288,7 +303,25 @@ attributions["attribution_basis_clean"] = attributions["attribution_basis_clean"
         "Not available"
     ] else x
 )
+
+attributions_bases["attribution_basis_clean"] = attributions_bases["attribution_basis_clean"].apply(
+    lambda x: np.NaN if x and x in [
+        "None",
+        "Not available",
+        "Contested attribution",
+    ] else x
+)
+
+
 attribution_basis_df = attributions[["ID", "start_date", "attribution_ID", "attribution_date", "attribution_basis_clean"]]
+attributions_bases = attributions_bases[["ID", "start_date", "attribution_ID", "attribution_date", "attribution_basis_clean"]]
+
+attributions_bases = attributions_bases.merge(receiver_country, on='ID', how='outer')
+attributions_bases = attributions_bases.merge(initiator_country, on='ID', how='outer')
+attributions_bases = attributions_bases.merge(incident_types, on='ID', how='outer')
+attributions_bases = attributions_bases.drop_duplicates()
+attributions_bases = attributions_bases.merge(df_regions, on='ID', how='outer')
+attributions_bases.to_csv("./app/data/dashboard_attributions_basis_data.csv", index=False)
 
 # Split the data into two dataframes based on the attribution basis
 attribution_start_date = attribution_basis_df[["ID", "start_date"]]
@@ -374,7 +407,6 @@ pol_graph_data = pol_graph_data[pol_graph_data["added_to_DB"] > "2022-08-15"]
 pol_graph_data = pol_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 pol_graph_data["receiver_region"] = pol_graph_data["receiver_region"].astype(str)
 
-
 legal = tables.legal_responses.copy(deep=True)
 legal_graph_data = legal.merge(start_date, on='ID', how='outer')
 legal_graph_data = legal_graph_data.merge(added_to_db, on='ID', how='outer')
@@ -410,5 +442,19 @@ responses_graph_data = responses_graph_data.merge(incident_types, on='ID', how='
 responses_graph_data = responses_graph_data.drop_duplicates()
 responses_graph_data = responses_graph_data.merge(df_regions, how="left", on="ID").reset_index(drop=True)
 responses_graph_data["receiver_region"] = responses_graph_data["receiver_region"].astype(str)
-
 responses_graph_data.to_csv("./app/data/dashboard_responses_data.csv", index=False)
+
+pol_graph_data[['country_type_response', 'response_type']] = pol_graph_data['political_response_type'].str.split(':', expand=True)
+pol_graph_data['country_type_response'] = pol_graph_data['country_type_response'].str.strip()
+pol_graph_data['response_type'] = pol_graph_data['response_type'].str.strip()
+pol_response_type = pol_graph_data[['ID', 'country_type_response', 'response_type']]
+
+legal_graph_data_sub = legal_graph_data[['ID', 'legal_response_type', 'legal_response_type_subcode']]
+legal_graph_data_sub = legal_graph_data_sub.drop_duplicates()
+legal_graph_data_sub['legal_response_type_clean'] = np.where(legal_graph_data_sub['legal_response_type_subcode'] == '', legal_graph_data_sub['legal_response_type'], legal_graph_data_sub['legal_response_type_subcode'])
+legal_graph_data_sub = legal_graph_data_sub[['ID', 'legal_response_type_clean']]
+
+responses_details = responses_graph_data.merge(pol_response_type, on='ID', how='left')
+responses_details = responses_details.merge(legal_graph_data_sub, on='ID', how='left')
+
+responses_details.to_csv("./app/data/dashboard_responses_details_data.csv", index=False)

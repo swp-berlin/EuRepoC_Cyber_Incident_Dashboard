@@ -9,6 +9,18 @@ from server.server_functions import filter_database_by_output, filter_datatable,
 from server.common_callbacks import create_modal_text
 
 
+
+def attributions_question_title(app):
+    @app.callback(
+        Output("attributions_question_title", "children"),
+        Input('attributions-card-tabs', 'active_tab'),
+    )
+    def selection_text_output(active_tab):
+        if active_tab == "timeline_tab":
+            return html.H3("How long does it take for the initiator of a cyber incident to be attributed?", style={'text-align': 'center'})
+        else:
+            return html.H3("Who attributes cyber incidents?", style={'text-align': 'center'})
+
 def attributions_title_callback(app):
     @app.callback(
         Output("attributions_text", "children"),
@@ -17,12 +29,14 @@ def attributions_title_callback(app):
         Input('incident_type_dd', 'value'),
         Input('date-picker-range', 'start_date'),
         Input('date-picker-range', 'end_date'),
+        Input('attributions-card-tabs', 'active_tab'),
     )
     def selection_text_output(receiver_country,
                               initiator_country,
                               incident_type,
                               start_date_start,
-                              start_date_end):
+                              start_date_end,
+                              active_tab):
 
         start_date = pd.to_datetime(start_date_start).strftime('%d-%m-%Y')
         end_date = pd.to_datetime(start_date_end).strftime('%d-%m-%Y')
@@ -37,17 +51,32 @@ def attributions_title_callback(app):
         else:
             type = "cyber"
 
-        if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents from {initiator_country} against {receiver_country}  \
-            between {start_date} and {end_date}"))
-        elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents between {start_date} and {end_date}"))
-        elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents based in {initiator_country} \
-            between {start_date} and {end_date}"))
-        elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents against {receiver_country} \
-            between {start_date} and {end_date}"))
+        if active_tab == "timeline_tab":
+            if start_date == "01-01-2000":
+                start_date = "01-01-2010"
+            if receiver_country != "Global (states)" and initiator_country:
+                return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents from {initiator_country} against {receiver_country}  \
+                between {start_date} and {end_date}"))
+            elif receiver_country == "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents between {start_date} and {end_date}"))
+            elif receiver_country == "Global (states)" and initiator_country:
+                return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents based in {initiator_country} \
+                between {start_date} and {end_date}"))
+            elif receiver_country != "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents against {receiver_country} \
+                between {start_date} and {end_date}"))
+        else:
+            if receiver_country != "Global (states)" and initiator_country:
+                return html.P(html.B(f"Types of attribution for {type.lower()} incidents from {initiator_country} against {receiver_country}  \
+                between {start_date} and {end_date}"))
+            elif receiver_country == "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Types of attribution for {type.lower()} incidents between {start_date} and {end_date}"))
+            elif receiver_country == "Global (states)" and initiator_country:
+                return html.P(html.B(f"Types of attribution for {type.lower()} incidents based in {initiator_country} \
+                between {start_date} and {end_date}"))
+            elif receiver_country != "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Types of attribution for {type.lower()} incidents against {receiver_country} \
+                between {start_date} and {end_date}"))
 
 
 def attributions_graph_callback(app, df=None, states_codes=None):

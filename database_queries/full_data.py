@@ -212,7 +212,7 @@ average_scores_across_incidents = {
     "<b>Impact indicator</b>": impact_indicator_value_average_converted
 }
 
-with open('./data/average_scores_across_incidents.pickle', 'wb') as f:
+with open('./app/data/average_scores_across_incidents.pickle', 'wb') as f:
     pickle.dump(average_scores_across_incidents, f)
 
 
@@ -439,3 +439,10 @@ for i in range(len(all_incidents_clean_dict)):
 
 with open("./app/data/full_data_dict_index_map.pickle", "wb") as file:
     pickle.dump(full_data_dict_index_map, file)
+
+order_df["end_date"] = order_df["end_date"].apply(lambda x: x if x != "Not available" else None)
+order_df["end_date"] = order_df["end_date"].apply(lambda x: pd.to_datetime(x) if x != None else None)
+order_df["end_date"] = pd.to_datetime(order_df["end_date"], format='%Y-%m-%d')
+order_df["start_date"] = pd.to_datetime(order_df["start_date"], format='%Y-%m-%d')
+
+order_df["time_diff"] = order_df["end_date"] - order_df["start_date"]

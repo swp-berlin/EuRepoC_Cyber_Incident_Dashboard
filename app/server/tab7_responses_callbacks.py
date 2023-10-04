@@ -11,6 +11,17 @@ from server.common_callbacks import create_modal_text
 
 
 ## ajouter plusieurs options; pour varié le genre de choses qui peuvent être choisi 
+def responses_question_title(app):
+    @app.callback(
+        Output("responses_question_title", "children"),
+        Input('responses-card-tabs', 'active_tab'),
+    )
+    def selection_text_output(active_tab):
+        if active_tab == "response_number_tab":
+            return html.H3("How many cyber incidents are met with a political or legal response?", style={'text-align': 'center'})
+        elif active_tab == "reponse_types_tab":
+            return html.H3("What type of political or legal responses do cyber incidents receive?", style={'text-align': 'center'})
+
 
 def responses_title_callback(app):
     @app.callback(
@@ -20,12 +31,14 @@ def responses_title_callback(app):
         Input('incident_type_dd', 'value'),
         Input('date-picker-range', 'start_date'),
         Input('date-picker-range', 'end_date'),
+        Input('responses-card-tabs', 'active_tab'),
     )
     def selection_text_output(receiver_country,
                               initiator_country,
                               incident_type,
                               start_date_start,
-                              start_date_end):
+                              start_date_end,
+                              active_tab):
 
         start_date = pd.to_datetime(start_date_start).strftime('%d-%m-%Y')
         end_date = pd.to_datetime(start_date_end).strftime('%d-%m-%Y')
@@ -40,17 +53,30 @@ def responses_title_callback(app):
         else:
             type = "Cyber"
 
-        if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"{type.capitalize()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
-            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
-        elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
-        elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses from initiators based in {initiator_country} \
-            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
-        elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"{type.capitalize()} incidents against {receiver_country} with political or legal responses \
-            between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+        if active_tab == "response_number_tab":
+            if receiver_country != "Global (states)" and initiator_country:
+                return html.P(html.B(f"{type.capitalize()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country == "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country == "Global (states)" and initiator_country:
+                return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses from initiators based in {initiator_country} \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country != "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"{type.capitalize()} incidents against {receiver_country} with political or legal responses \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+        else:
+            if receiver_country != "Global (states)" and initiator_country:
+                return html.P(html.B(f"Type of responses for {type.lower()} incidents from {initiator_country} against {receiver_country} \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country == "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Type of responses for {type.lower()} incidents between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country == "Global (states)" and initiator_country:
+                return html.P(html.B(f"Type of responses for {type.lower()} incidents from initiators based in {initiator_country} \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+            elif receiver_country != "Global (states)" and initiator_country is None:
+                return html.P(html.B(f"Type of responses for {type.lower()} incidents against {receiver_country} \
+                between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
 
 
 def responses_graph_callback(app, df=None, states_codes=None):
@@ -99,11 +125,6 @@ def responses_graph_callback(app, df=None, states_codes=None):
             "political_response": "sum",
             "legal_response": "sum",
         }).reset_index()
-
-        """responses_grouped["response"] = responses_grouped["response"].apply(lambda x: 1 if x > 0 else 0)
-        responses_grouped["political_response"] = responses_grouped["political_response"].apply(
-            lambda x: 1 if x > 0 else 0)
-        responses_grouped["legal_response"] = responses_grouped["legal_response"].apply(lambda x: 1 if x > 0 else 0)"""
 
         pie_data = {
             "total_responses": [

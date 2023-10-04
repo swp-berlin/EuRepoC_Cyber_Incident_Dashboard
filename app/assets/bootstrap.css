@@ -3770,6 +3770,25 @@ textarea.form-control-lg {
   border-top-right-radius: 0;
 }
 
+.nav-tabs2 {
+  border: none;
+}
+.nav-tabs2 .nav-link {
+  border: 1px solid #dee2e6;
+  border-radius: 0;
+  background-color: white;
+  color: #495057;
+}
+.nav-tabs2 .nav-link:hover, .nav-tabs2 .nav-link:focus {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+.nav-tabs2 .nav-link.active {
+  background-color: #CC0130;
+  color: white;
+  border-color: #dee2e6;
+}
+
 .nav-pills {
   --bs-nav-pills-border-radius: 0.375rem;
   --bs-nav-pills-link-active-color: #fff;
