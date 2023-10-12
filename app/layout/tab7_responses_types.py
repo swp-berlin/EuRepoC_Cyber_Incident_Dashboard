@@ -1,12 +1,9 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG
+from layout.layout_functions import create_table, CONFIG, generate_incident_details_modal
 
 
-modal_responses_types = dbc.Modal([
-    dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_responses_content_types'),
-], id='modal_responses_types', size='xl', centered=True, scrollable=True)
+modal_responses_types = generate_incident_details_modal(modal_body_id="modal_responses_content_types", modal_id="modal_responses_types")
 
 
 responses_types_tab = dbc.Row([

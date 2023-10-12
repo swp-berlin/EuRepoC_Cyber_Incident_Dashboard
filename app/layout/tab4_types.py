@@ -1,12 +1,11 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
+from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
+    generate_text_with_popover_icon, generate_incident_details_modal
 
 
-modal_types = dbc.Modal([
-    dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_types_content'),
-], id='modal_types', size='xl', centered=True, scrollable=True)
+modal_types = generate_incident_details_modal(modal_body_id="modal_types_content", modal_id="modal_types")
+
 
 data_theft_popover = dbc.Popover(
     "Incidents initiated to gather information from a targeted computer or computer system. Although data or \

@@ -1,12 +1,11 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
+from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
+    generate_text_with_popover_icon, generate_incident_details_modal
 
 
-modal_attributions = dbc.Modal([
-    dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_attributions_content'),
-], id='modal_attributions', size='xl', centered=True, scrollable=True)
+modal_attributions = generate_incident_details_modal(modal_body_id="modal_attributions_content", modal_id="modal_attributions")
+
 
 mean_intensity_attributions_popover = generate_intensity_popover(target_id="mean_intensity_attributions_info")
 mean_intensity_attributions_popover_icon = generate_text_with_popover_icon(

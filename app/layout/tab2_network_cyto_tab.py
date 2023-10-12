@@ -1,7 +1,7 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
-from layout.layout_functions import create_table
+from layout.layout_functions import create_table, generate_incident_details_modal
 
 
 default_stylesheet = [
@@ -31,10 +31,7 @@ default_stylesheet = [
 ]
 
 
-modal_network = dbc.Modal([
-    dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_network_content'),
-], id='modal_network', size='xl', centered=True, scrollable=True)
+modal_network = generate_incident_details_modal(modal_body_id="modal_network_content", modal_id="modal_network")
 
 
 network_cyto_tab = dbc.Row([

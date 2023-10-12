@@ -215,7 +215,7 @@ def network_graph_callback(app, df=None, states_codes=None):
                 nodes.append({"data": {"id": all_nodes[i], "flag": flags[i]}})
 
             edges = []
-            for row in network_full.iterrows():
+            for index, row in network_full.iterrows():
                 edges.append({"data": {
                     "source": row["initiator_country"],
                     "target": row["receiver_country"],

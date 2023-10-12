@@ -218,3 +218,10 @@ def generate_text_with_popover_icon(text=None, span_id=None, popover=None):
         popover,
     ], className="position-relative")
     return text_span
+
+
+def generate_incident_details_modal(modal_body_id=None, modal_id=None):
+    return dbc.Modal([
+        dbc.ModalHeader(html.H3('Incident details')),
+        dbc.ModalBody(id=modal_body_id),
+    ], id=modal_id, size='xl', centered=True, scrollable=True)

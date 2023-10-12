@@ -1,12 +1,12 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG
+from layout.layout_functions import create_table, CONFIG, generate_incident_details_modal
 
 
-modal_network_graph = dbc.Modal([
-    dbc.ModalHeader(html.H3('Incident details')),
-    dbc.ModalBody(id='modal_network_content_graph'),
-], id='modal_network_graph', size='xl', centered=True, scrollable=True)
+modal_network_graph = generate_incident_details_modal(
+    modal_body_id="modal_network_content_graph",
+    modal_id="modal_network_graph",
+)
 
 
 network_bar_tab = dbc.Row([
