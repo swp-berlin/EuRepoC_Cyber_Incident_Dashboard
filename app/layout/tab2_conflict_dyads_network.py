@@ -1,7 +1,7 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
-from layout.layout_functions import create_table, generate_incident_details_modal, generate_datatable_details_layout
+from layout.layout_functions import generate_incident_details_modal, generate_datatable_details_layout
 
 
 # Default stylesheet for the cytoscape graph

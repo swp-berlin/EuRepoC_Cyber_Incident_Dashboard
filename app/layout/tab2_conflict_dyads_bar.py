@@ -1,7 +1,6 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import (create_table, CONFIG, generate_incident_details_modal,
-                                     generate_datatable_details_layout)
+from layout.layout_functions import CONFIG, generate_incident_details_modal, generate_datatable_details_layout
 
 
 modal_conflict_dyads_bar = generate_incident_details_modal(

@@ -1,10 +1,17 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
-    generate_text_with_popover_icon, generate_incident_details_modal
+from layout.layout_functions import CONFIG, generate_intensity_popover, \
+    generate_text_with_popover_icon, generate_incident_details_modal, generate_datatable_details_layout
 
 
 modal_timeline = generate_incident_details_modal(modal_body_id="modal_timeline_content", modal_id="modal_timeline")
+
+timeline_datatable_layout = generate_datatable_details_layout(
+    datatable_id="timeline_datatable",
+    column_name="incident_type",
+    column_label="Incident type",
+    modal_layout=modal_timeline,
+)
 
 
 mean_intensity_timeline_popover = generate_intensity_popover(target_id="mean_intensity_timeline_info")
@@ -117,33 +124,8 @@ timeline_tab = dbc.Container(
                         )
                     ], style={"text-align": "center"}),
                 ]),
-            ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
+            ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3),
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.P(
-                    "Details on incidents",
-                    style={"font-weight": "bold", "font-size": "1rem"}
-                )
-            ]),
-        ], style={"margin-top": "25px", "margin-bottom": "5px"}),
-        dbc.Row([
-            dbc.Col([
-                create_table("timeline_datatable", "incident_type", "Incident type"),
-                modal_timeline,
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.P([
-                    html.I(
-                        className="fa-solid fa-arrow-pointer",
-                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
-                    ),
-                    " Click on a row in the table above to display all information about the incident",
-                    ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
-                )
-            ]),
-        ], style={"margin-top": "1px"}),
+        *timeline_datatable_layout
     ])
 )
