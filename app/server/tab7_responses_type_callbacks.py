@@ -1,11 +1,7 @@
 from dash import html
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from datetime import datetime
-import numpy as np
-import plotly.subplots as sp
 import plotly.graph_objs as go
-from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
 

@@ -1,7 +1,7 @@
 from dash import html
 from dash.exceptions import PreventUpdate
 from dash import callback_context as ctx
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
 
@@ -176,8 +176,8 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
         return is_open, None
     else:
         row_on_current_page = active_cell['row'] + (page_current) * 12
-        id = pd.DataFrame(derived_virtual_data).iloc[row_on_current_page].to_dict()
-        incident = data[index[int(id['ID'])]]
+        incident_id = pd.DataFrame(derived_virtual_data).iloc[row_on_current_page].to_dict()
+        incident = data[index[int(incident_id['ID'])]]
 
         sources_url_text = [
             html.Ul([
@@ -231,10 +231,6 @@ def create_modal_text(data=None, index=None, derived_virtual_data=None, active_c
                                  html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
                              ])
                          ),
-                         #html.P([
-                          #   html.Span("Sources URL: ", style={"font-weight": "bold"}),
-                           #  html.Span([sources_url_text[i] for i in range(len(sources_url_text))])
-                         #]),
                          html.P([html.Span("Added to database: ", style={"font-weight": "bold"}),
                                  f"{incident['added_to_DB']}"]),
                          html.P([html.Span("Last updated: ", style={"font-weight": "bold"}),

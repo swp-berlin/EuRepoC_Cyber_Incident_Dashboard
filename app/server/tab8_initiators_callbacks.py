@@ -1,8 +1,6 @@
 from dash import html
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from datetime import datetime
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import callback_context as ctx
@@ -34,21 +32,19 @@ def initiators_title_callback(app):
         if incident_type == "All":
             incident_type = None
 
-        if incident_type:
-            type = incident_type
-        else:
-            type = "cyber"
+        if incident_type is None:
+            incident_type = "cyber"
 
         if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"Number of {type.lower()} incidents by type of initiator from {initiator_country} against {receiver_country} \
+            return html.P(html.B(f"Number of {incident_type.lower()} incidents by type of initiator from {initiator_country} against {receiver_country} \
             between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Number of {type.lower()} incidents by type of initiator between {start_date} and {end_date}"))
+            return html.P(html.B(f"Number of {incident_type.lower()} incidents by type of initiator between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"Number of {type.lower()} incidents by type of initiator from {initiator_country} \
+            return html.P(html.B(f"Number of {incident_type.lower()} incidents by type of initiator from {initiator_country} \
             between {start_date} and {end_date}"))
         elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Number of {type.lower()} incidents by type of initiator against {receiver_country} \
+            return html.P(html.B(f"Number of {incident_type.lower()} incidents by type of initiator against {receiver_country} \
             between {start_date} and {end_date}"))
 
 

@@ -2,7 +2,6 @@ from dash import html
 from dash.dependencies import Input, Output, State
 from dash import callback_context as ctx
 from server.common_callbacks import create_modal_text
-from server.server_functions import empty_figure
 import pandas as pd
 import numpy as np
 import pickle
@@ -216,7 +215,7 @@ def network_graph_callback(app, df=None, states_codes=None):
                 nodes.append({"data": {"id": all_nodes[i], "flag": flags[i]}})
 
             edges = []
-            for index, row in network_full.iterrows():
+            for row in network_full.iterrows():
                 edges.append({"data": {
                     "source": row["initiator_country"],
                     "target": row["receiver_country"],

@@ -1,6 +1,5 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from layout.layout_functions import make_break
 from layout.sidebar import generate_sidebar
 
 

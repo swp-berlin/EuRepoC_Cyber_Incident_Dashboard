@@ -30,19 +30,17 @@ def sectors_title_callback(app):
         if incident_type == "All":
             incident_type = None
 
-        if incident_type:
-            type = incident_type
-        else:
-            type = "cyber"
+        if incident_type is None:
+            incident_type = "cyber"
 
         if receiver_country != "Global (states)" and initiator_country:
-            return html.P(html.B(f"Top sectors targeted by {type.lower()} incidents from {initiator_country} against {receiver_country} between {start_date} and {end_date}"))
+            return html.P(html.B(f"Top sectors targeted by {incident_type.lower()} incidents from {initiator_country} against {receiver_country} between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Top sectors targeted by {type.lower()} incidents between {start_date} and {end_date}"))
+            return html.P(html.B(f"Top sectors targeted by {incident_type.lower()} incidents between {start_date} and {end_date}"))
         elif receiver_country == "Global (states)" and initiator_country:
-            return html.P(html.B(f"Top sectors targeted by {type.lower()} incidents from actors based in {initiator_country} between {start_date} and {end_date}"))
+            return html.P(html.B(f"Top sectors targeted by {incident_type.lower()} incidents from actors based in {initiator_country} between {start_date} and {end_date}"))
         elif receiver_country != "Global (states)" and initiator_country is None:
-            return html.P(html.B(f"Top sectors targeted by {type.lower()} incidents in {receiver_country} between {start_date} and {end_date}"))
+            return html.P(html.B(f"Top sectors targeted by {incident_type.lower()} incidents in {receiver_country} between {start_date} and {end_date}"))
 
 
 def sectors_graph_callback(app, df=None, states_codes=None):
@@ -87,7 +85,7 @@ def sectors_graph_callback(app, df=None, states_codes=None):
 
         else:
 
-            values_data = filtered_df.groupby(["receiver_category"])["ID"].nunique().reset_index()
+            #values_data = filtered_df.groupby(["receiver_category"])["ID"].nunique().reset_index()
             grouped_data = filtered_df.groupby(["receiver_category", "receiver_category_subcode"])["ID"].nunique().reset_index()
             grouped_data = grouped_data.sort_values(by="receiver_category", ascending=True).reset_index(drop=True)
 
