@@ -32,23 +32,21 @@ inclusion_criteria_popover = dbc.Popover([
 
 # Tab body
 map_tab = dbc.Row([
-
     dbc.Row([
         dbc.Col([
             html.Div(id="selected_options_text", style={'text-align': 'center'}),
         ], style={'margin': '20px'}),
     ]),
-
     dbc.Row([
         dbc.Col([
             html.P([
                 "The map displays all incidents recorded in our database, based on your selected initiator country, \
                  target country and timeframe. Please note that our database only covers ",
                 html.B("cyber incidents with a political dimension"),
-                 ". This includes incidents that have not yet been politicised and \
-                 cases where no political motivation and/or affiliation of the attacker(s) has been reported. \
-                 The graph on the bottom right illustrates our inclusion criteria, along with the number of incidents \
-                 corresponding to each criterion."
+                ". This includes incidents that have not yet been politicised and \
+                cases where no political motivation and/or affiliation of the attacker(s) has been reported. \
+                The graph on the bottom right illustrates our inclusion criteria, along with the number of incidents \
+                corresponding to each criterion."
             ]),
         ], style={"margin-top": "10px"}),
         dbc.Col([
@@ -99,9 +97,7 @@ map_tab = dbc.Row([
             ], align="center"),
         ], lg=6, align="center"),
     ]),
-
     *make_break(1),
-
     dbc.Row([
         dbc.Col([
             *make_break(1),
@@ -131,10 +127,9 @@ map_tab = dbc.Row([
             ], className="position-relative"),
             dcc.Graph(
                 id="inclusion_graph",
-            config={
-                **CONFIG,
-            }
-
+                config={
+                    **CONFIG,
+                }
             ),
         ], lg=6),
     ]),

@@ -5,9 +5,12 @@ import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
-from layout.layout import serve_layout
+from layout.main_layout import serve_layout
 from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
-from server.main_callbacks import reset_button_callback, tab_change_callback, change_network_tab, change_attributions_tab, change_responses_tab
+from server.main_callbacks import (
+    reset_button_callback, tab_change_callback,
+    change_conflict_dyads_tab, change_attributions_tab, change_responses_tab
+)
 from server.common_callbacks import clear_selected_click_data_callback, \
     clear_active_cell_datatables_callback
 from server.tab1_inclusion_criteria_callbacks import inclusion_criteria_graph_callback
@@ -204,7 +207,7 @@ inclusion_criteria_graph_callback(app, df=inclusion_data, states_codes=states_co
 metric_values_callback(app)
 
 # TAB 2
-change_network_tab(app)
+change_conflict_dyads_tab(app)
 network_title_callback(app)
 network_graph_callback(app, df=network, states_codes=states_codes)
 style_node_onclick_callback(app)
@@ -240,15 +243,15 @@ network_bar_datatable_callback(
 )
 clear_selected_click_data_callback(
     app,
-    output_id="network-bar-graph",
+    output_id="dyads-bar-graph",
     output_component_property="clickData",
-    input_id="clear_network_bar_click_data"
+    input_id="clear_dyads_bar_click_data"
 )
 clear_active_cell_datatables_callback(
     app,
-    output_id="network_datatable_graph",
-    input_component_property="tapNode",
-    input_id="network-bar-graph"
+    output_id="dyads_bar_datatable",
+    input_component_property="clickData",
+    input_id="dyads-bar-graph"
 )
 
 
@@ -432,4 +435,4 @@ app.layout = serve_layout
 
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0")
+    app.run_server(host="0.0.0.0", debug=True)

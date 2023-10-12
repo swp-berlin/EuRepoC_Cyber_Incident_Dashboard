@@ -57,19 +57,26 @@ def generate_sidebar():
                 )
             ], style={'text-align': 'center', 'margin-bottom': '5px'}),
             html.P([
-                "This dashboard displays key trends in cyber incidents tracked in our database, and it is updated daily. \
-                Click on the tabs to the right to find statistics covering various aspects: \
-                from the evolution of the number of cyber incidents to the main types of incidents, targets, and initiators. \
-                On most tabs, clicking on the data points in the graphs will display all related incidents. \
-                Using the dropdown menus below, you can select specific combinations of incident types, initiators and \
-                targets to update all graphs according to your selection.",
+                "This dashboard displays key trends in cyber incidents tracked in our database,  \
+                and it is updated daily. Click on the tabs to the right to find statistics covering various aspects: \
+                from the evolution of the number of cyber incidents to the main types of incidents, targets, \
+                and initiators. On most tabs, clicking on the data points in the graphs will display all related \
+                incidents. Using the dropdown menus below, you can select specific combinations of incident types, \
+                initiators and targets to update all graphs according to your selection.",
                 ], style={'text-align': 'justify'}),
-            html.P(["Please see our ", html.A(href="https://eurepoc.eu/methodology", target="_blank", children="methodology"), " section for further information!"], style={'text-align': 'center'}),
+            html.P([
+                "Please see our ",
+                html.A(href="https://eurepoc.eu/methodology", target="_blank", children="methodology"),
+                " section for further information!"
+            ], style={'text-align': 'center'}),
             html.Div(
                 id="sidebar_text_default",
                 children=[
                     html.P(
-                        html.B("Select an incident type, initiator and target country", style={'text-align': 'left', 'font-size': '1rem'})
+                        html.B(
+                            "Select an incident type, initiator and target country",
+                            style={'text-align': 'left', 'font-size': '1rem'}
+                        )
                     ),
                 ]
             ),
@@ -205,4 +212,3 @@ def generate_sidebar():
         ]),
     ], className="h-100")
     return sidebar
-

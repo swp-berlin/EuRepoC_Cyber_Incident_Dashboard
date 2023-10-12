@@ -182,6 +182,7 @@ CONFIG = {
     'responsive': True
 }
 
+
 # Function to generate the popover explaining the "Cyber Intensity Indicator"
 def generate_intensity_popover(target_id=None):
     return dbc.Popover(
@@ -220,8 +221,49 @@ def generate_text_with_popover_icon(text=None, span_id=None, popover=None):
     return text_span
 
 
+# Function to create the incident details modal
 def generate_incident_details_modal(modal_body_id=None, modal_id=None):
     return dbc.Modal([
         dbc.ModalHeader(html.H3('Incident details')),
         dbc.ModalBody(id=modal_body_id),
     ], id=modal_id, size='xl', centered=True, scrollable=True)
+
+
+def generate_datatable_details_layout(
+        datatable_id=None,
+        column_name=None,
+        column_label=None,
+        modal_layout=None,
+):
+    datatable_layout = [
+        dbc.Row([
+            dbc.Col([
+                html.P([
+                    "Details on incidents",
+                ], style={"font-weight": "bold", "font-size": "1rem"}),
+            ], style={"margin-top": "28px", "margin-bottom": "5px"}),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                create_table(
+                    table_id=datatable_id,
+                    column_name=column_name,
+                    column_label=column_label,
+                ),
+                modal_layout,
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                html.P([
+                    html.I(
+                        className="fa-solid fa-arrow-pointer",
+                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
+                    ),
+                    " Click on a row in the table above to display all information about the incident",
+                ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
+                )
+            ]),
+        ], style={"margin-top": "1px"})
+    ]
+    return datatable_layout

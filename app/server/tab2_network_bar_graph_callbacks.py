@@ -10,10 +10,10 @@ from server.common_callbacks import create_modal_text
 
 def network_bar_graph_callback(app, df=None, states_codes=None):
     @app.callback(
-        Output('network-bar-graph', 'figure'),
-        Output('network-bar-graph-key-insight', 'children'),
+        Output('dyads-bar-graph', 'figure'),
+        Output('dyads-bar-graph-key-insight', 'children'),
         Input('receiver_country_dd', 'value'),
-        Input("network-bar-graph", "clickData"),
+        Input("dyads-bar-graph", "clickData"),
     )
     def create_graph(input_receiver_country,
                         clickData,
@@ -122,8 +122,8 @@ def network_bar_graph_callback(app, df=None, states_codes=None):
 
 def network_bar_text_selection_callback(app):
     @app.callback(
-        Output('network-bar-selected', 'children'),
-        Input('network-bar-graph', 'clickData'),
+        Output('dyads-bar-selected', 'children'),
+        Input('dyads-bar-graph', 'clickData'),
         Input(component_id='receiver_country_dd', component_property='value'),
     )
     def display_click_data(
@@ -151,17 +151,17 @@ def network_bar_text_selection_callback(app):
 
 def network_bar_datatable_callback(app, df=None, states_codes=None, data_dict=None, index=None):
     @app.callback(
-        Output(component_id='network_datatable_graph', component_property='data'),
-        Output(component_id='network_datatable_graph', component_property='tooltip_data'),
-        Output(component_id="modal_network_graph", component_property='is_open'),
-        Output(component_id="modal_network_content_graph", component_property='children'),
+        Output(component_id='dyads_bar_datatable', component_property='data'),
+        Output(component_id='dyads_bar_datatable', component_property='tooltip_data'),
+        Output(component_id="modal_conflict_dyads_bar", component_property='is_open'),
+        Output(component_id="modal_conflict_dyads_bar_content", component_property='children'),
         Input(component_id='receiver_country_dd', component_property='value'),
-        Input(component_id="network-bar-graph", component_property="clickData"),
-        Input(component_id="network_datatable_graph", component_property="derived_virtual_data"),
-        Input(component_id="network_datatable_graph", component_property='active_cell'),
-        Input(component_id="network_datatable_graph", component_property='page_current'),
+        Input(component_id="dyads-bar-graph", component_property="clickData"),
+        Input(component_id="dyads_bar_datatable", component_property="derived_virtual_data"),
+        Input(component_id="dyads_bar_datatable", component_property='active_cell'),
+        Input(component_id="dyads_bar_datatable", component_property='page_current'),
         Input(component_id="metric_values", component_property="data"),
-        State(component_id="modal_network_graph", component_property="is_open"),
+        State(component_id="modal_conflict_dyads_bar", component_property="is_open"),
     )
     def update_table(receiver_country_filter,
                      clickData,

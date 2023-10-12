@@ -38,14 +38,17 @@ eu_member_states = [
         "Slovenia",
         "Spain",
         "Sweden",
-        #"United Kingdom"
     ]
+
 
 def construct_details(edge_type, node, text):
     node_details = html.Div([])
     if len(edge_type) > 0:
         for edge in edge_type:
-            threat_group = re.match(r'([^/]*/[^/]*)/.*', str(edge["initiator_name"])).group(1) if re.match(r'([^/]*/[^/]*)/.*', str(edge["initiator_name"])) else str(edge["initiator_name"])
+            threat_group = re.match(
+                r'([^/]*/[^/]*)/.*',
+                str(edge["initiator_name"])).group(1) if re.match(r'([^/]*/[^/]*)/.*',
+                                                                  str(edge["initiator_name"])) else str(edge["initiator_name"])
             list_items = html.Ul([
                 html.Li("Number of incidents: " + str(edge["nb_incidents"])),
                 html.Li("Average cyber intensity: " + str(edge["cyber_intensity"])),
@@ -63,11 +66,11 @@ def construct_details(edge_type, node, text):
 
 
 def network_title_callback(app):
-    @app.callback(Output("network_title", 'children'),
+    @app.callback(Output("dyads_title", 'children'),
                   [Input('receiver_country_dd', 'value'),
-                   Input("network-card-tabs", "active_tab")])
+                   Input("conflict_dyads_card_tabs", "active_tab")])
     def update_network_title(receiver_country, active_tab):
-        if active_tab == "network_tab":
+        if active_tab == "conflict_dyads_tab":
             if receiver_country == "Global (states)":
                 return html.Div([html.B("Main cyber conflict dyads across all countries")])
             else:
@@ -443,15 +446,15 @@ def network_datatable_callback(app, df=None, data_dict=None, index=None, states_
     @app.callback(
         Output('network_datatable', 'data'),
         Output('network_datatable', 'tooltip_data'),
-        Output("modal_network", 'is_open'),
-        Output("modal_network_content", 'children'),
+        Output("modal_conflict_dyads_network", 'is_open'),
+        Output("modal_conflict_dyads_network_content", 'children'),
         Input('cytoscape-graph', 'tapNode'),
         Input('receiver_country_dd', 'value'),
         Input("nodes_graph", "data"),
         Input("network_datatable", "derived_virtual_data"),
         Input("network_datatable", 'active_cell'),
         Input("network_datatable", 'page_current'),
-        State("modal_network", "is_open"),
+        State("modal_conflict_dyads_network", "is_open"),
     )
     # DataTable
     def update_table(node, receiver_country_filter, nodes_present, derived_virtual_data, active_cell, page_current, is_open):

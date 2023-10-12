@@ -1,14 +1,14 @@
 from dash.dependencies import Input, Output
 from layout.tab1_mapview import map_tab
-from layout.tab2_network import network_tab
+from layout.tab2_conflict_dyads import conflict_dyads_tab
+from layout.tab2_conflict_dyads_network import conflict_dyads_network_tab
+from layout.tab2_conflict_dyads_bar import conflict_dyads_bar_tab
 from layout.tab3_timeline import timeline_tab
 from layout.tab4_types import types_tab
 from layout.tab5_sectors import sectors_tab
 from layout.tab6_attributions import attributions_tab
 from layout.tab7_responses import responses_tab
 from layout.tab8_initiator_types import initiators_tab
-from layout.tab2_network_cyto_tab import network_cyto_tab
-from layout.tab2_initiator_bar_tab import network_bar_tab
 from layout.tab6_attribution_types_tab import attributions_tab_types
 from layout.tab6_attribution_speed_tab import attributions_tab_speed
 from layout.tab7_responses_nb_tab import responses_nb_tab
@@ -34,8 +34,6 @@ def reset_button_callback(app):
                 None, \
                 date(2000, 1, 1), \
                 dt.now().date()
-                #date(2010, 1, 1), \
-                #dt.now().date()
 
 
 # tab change callback
@@ -53,7 +51,7 @@ def tab_change_callback(app):
         if active_tab == "tab-1":
             return map_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-2":
-            return network_tab, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
+            return conflict_dyads_tab, {'display': 'none'}, {'display': 'block'}, {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
         elif active_tab == "tab-3":
             return timeline_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
         elif active_tab == "tab-4":
@@ -68,16 +66,16 @@ def tab_change_callback(app):
             return initiators_tab, {'display': 'block'}, {'display': 'none'}, {'display': 'block'}, {'display': 'block'}, {'display': 'block'}
 
 
-def change_network_tab(app):
+def change_conflict_dyads_tab(app):
     @app.callback(
-        Output("network-card-content", "children"),
-        [Input("network-card-tabs", "active_tab")]
+        Output("conflict_dyads_card_content", "children"),
+        [Input("conflict_dyads_card_tabs", "active_tab")]
     )
     def tab_content(active_tab):
         if active_tab == "network_tab":
-            return network_cyto_tab
+            return conflict_dyads_network_tab
         else:
-            return network_bar_tab
+            return conflict_dyads_bar_tab
 
 
 def change_attributions_tab(app):
