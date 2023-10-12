@@ -3,9 +3,12 @@ import dash_bootstrap_components as dbc
 from layout.layout_functions import make_break, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
 
 
+# Popovers
 cyber_intensity_popover = generate_intensity_popover(target_id="cyber_intensity_popover")
 cyber_intensity_popover_icon = generate_text_with_popover_icon(
-    text="Mean intensity", span_id="cyber_intensity_popover", popover=cyber_intensity_popover
+    text="Mean intensity",
+    span_id="cyber_intensity_popover",
+    popover=cyber_intensity_popover
 )
 
 threat_groups_popover = dbc.Popover([
@@ -14,9 +17,10 @@ threat_groups_popover = dbc.Popover([
             for your current selection."
         ]),
     ], target="threat_groups_info", trigger="hover")
-
 threat_groups_popover_icon = generate_text_with_popover_icon(
-    text="Threat groups", span_id="threat_groups_info", popover=threat_groups_popover
+    text="Threat groups",
+    span_id="threat_groups_info",
+    popover=threat_groups_popover
 )
 
 inclusion_criteria_popover = dbc.Popover([
@@ -26,6 +30,7 @@ inclusion_criteria_popover = dbc.Popover([
     ], target="inclusion_criteria_info", trigger="hover")
 
 
+# Tab body
 map_tab = dbc.Row([
 
     dbc.Row([

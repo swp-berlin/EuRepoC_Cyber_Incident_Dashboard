@@ -1,5 +1,4 @@
 import pandas as pd
-import re
 from datetime import datetime as dt
 
 
@@ -78,7 +77,6 @@ def filter_datatable(
     copied_df = df.copy(deep=True)
     copied_df = copied_df.fillna("").astype(str)
     copied_df["start_date"] = pd.to_datetime(copied_df["start_date"], format="%Y-%m-%d")
-    #date_range = pd.date_range(start=start_date, end=end_date)
     if start_date == "2000-01-01" and end_date == str(dt.now().date()):
         start_date = None
         end_date = None

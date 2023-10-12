@@ -1,6 +1,5 @@
-from dash import dcc, html
+from dash import html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon
 
 
 attributions_card_tabs = dbc.Row([

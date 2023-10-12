@@ -4,6 +4,7 @@ from layout.layout_functions import make_break
 from layout.sidebar import generate_sidebar
 
 
+# Tabs
 card_tabs = dbc.Row([
     dbc.Col([
         dbc.Tabs(
@@ -25,26 +26,15 @@ card_tabs = dbc.Row([
     ], xxl=12, xl=12, lg=12, md=12, sm=12, xs=12),
 ], style={"margin": "15px 0px 0px 0px"})
 
+
+# Layout
 def serve_layout():
     full_layout = dbc.Container(
         children=[
-            dcc.Interval(
-                    id='interval-component',
-                    interval=1 * 1000,  # in milliseconds
-                    max_intervals=1
-                ),
             dbc.Row([
                 dcc.Store(id='metric_values'),
                 dcc.Store(id='nb_threat_groups_data'),
-                #dcc.Store(id='prev-receiver-country'),
-                #dcc.Store(id='prev-initiator-country'),
-                #dcc.Store(id='prev-incident-type'),
-                #dcc.Store(id='prev-start-date'),
-                #dcc.Store(id='prev-end-date'),
             ]),
-
-            #*make_break(2),
-
             dbc.Row([
                 dbc.Col([
                     generate_sidebar(),

@@ -3,7 +3,6 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 from datetime import datetime
 import plotly.graph_objects as go
-import numpy as np
 from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
@@ -46,36 +45,34 @@ def attributions_title_callback(app):
         if incident_type == "All":
             incident_type = None
 
-        if incident_type:
-            type = incident_type
-        else:
-            type = "cyber"
+        if incident_type is None:
+            incident_type = "cyber"
 
         if active_tab == "timeline_tab":
             if start_date == "01-01-2000":
                 start_date = "01-01-2010"
             if receiver_country != "Global (states)" and initiator_country:
-                return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents from {initiator_country} against {receiver_country}  \
+                return html.P(html.B(f"Average number of months needed to attribute the initiators of {incident_type.lower()} incidents from {initiator_country} against {receiver_country}  \
                 between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Average number of months needed to attribute the initiators of {type.lower()} incidents between {start_date} and {end_date}"))
+                return html.P(html.B(f"Average number of months needed to attribute the initiators of {incident_type.lower()} incidents between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents based in {initiator_country} \
+                return html.P(html.B(f"Average number of months needed to attribute initiators of {incident_type.lower()} incidents based in {initiator_country} \
                 between {start_date} and {end_date}"))
             elif receiver_country != "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Average number of months needed to attribute initiators of {type.lower()} incidents against {receiver_country} \
+                return html.P(html.B(f"Average number of months needed to attribute initiators of {incident_type.lower()} incidents against {receiver_country} \
                 between {start_date} and {end_date}"))
         else:
             if receiver_country != "Global (states)" and initiator_country:
-                return html.P(html.B(f"Types of attribution for {type.lower()} incidents from {initiator_country} against {receiver_country}  \
+                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents from {initiator_country} against {receiver_country}  \
                 between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Types of attribution for {type.lower()} incidents between {start_date} and {end_date}"))
+                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"Types of attribution for {type.lower()} incidents based in {initiator_country} \
+                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents based in {initiator_country} \
                 between {start_date} and {end_date}"))
             elif receiver_country != "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Types of attribution for {type.lower()} incidents against {receiver_country} \
+                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents against {receiver_country} \
                 between {start_date} and {end_date}"))
 
 

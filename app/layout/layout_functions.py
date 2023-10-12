@@ -1,7 +1,8 @@
 from dash import html, dash_table
 import dash_bootstrap_components as dbc
-import json
 
+
+# Prdefined columns for incident detail tables
 column_names = [
     'ID',
     'name',
@@ -85,11 +86,7 @@ column_names = [
 ]
 
 
-def make_break(num_breaks):
-    br_list = [html.Br()] * num_breaks
-    return br_list
-
-
+# Function to create the incident detail tables
 def create_table(
         table_id=None,
         column_name="incident_type",
@@ -99,6 +96,7 @@ def create_table(
         column_name_3=None,
         column_label_3=None,
 ):
+    """Generate a dash datatable with specified columns."""
     base_columns = [
         {'name': 'ID', 'id': 'ID'},
         {'name': 'Incident name', 'id': 'name'},
@@ -137,15 +135,10 @@ def create_table(
         tooltip_duration=None,
         style_data={
             'color': 'black',
-            #'backgroundColor': 'rgb(230, 234, 235)',
             'font-family': 'var(--bs-font-sans-serif)',
             'border': '0.5px solid var(--bs-border-color-translucent)',
         },
         style_data_conditional=[
-            #{
-                #'if': {'row_index': 'odd'},
-               # 'backgroundColor': 'rgb(204, 213, 215)',
-            #}
             {
                 'if': {'state': 'active'},
                 'backgroundColor': '#f5ccd6',
@@ -160,7 +153,6 @@ def create_table(
             'font-family': 'var(--bs-font-sans-serif)',
             'border': '0.5px solid var(--bs-border-color-translucent)',
         },
-        #style_as_list_view=True,
         css=[
             {
                 'selector': '.dbc .previous-page:hover, .first-page:hover, .next-page:hover',
@@ -176,12 +168,21 @@ def create_table(
     return datatable
 
 
+# Function to create a specified number of line breaks (used for formatting)
+def make_break(num_breaks):
+    """Return a list containing a specified number of line breaks."""
+    br_list = [html.Br()] * num_breaks
+    return br_list
+
+
+# Configurations for the graphs - disabling the zoom and scroll
 CONFIG = {
     "displayModeBar": False,
     "scrollZoom": False,
     'responsive': True
 }
 
+# Function to generate the popover explaining the "Cyber Intensity Indicator"
 def generate_intensity_popover(target_id=None):
     return dbc.Popover(
         [
@@ -198,6 +199,8 @@ def generate_intensity_popover(target_id=None):
         trigger="hover",
     )
 
+
+# Function to create the i icon with the popover
 def generate_text_with_popover_icon(text=None, span_id=None, popover=None):
     text_span = html.Span([
         text,

@@ -1,14 +1,10 @@
 from dash import html
 from dash.dependencies import Input, Output, State
-import pandas as pd
 from datetime import datetime as dt
-import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
-import re
 
 
 

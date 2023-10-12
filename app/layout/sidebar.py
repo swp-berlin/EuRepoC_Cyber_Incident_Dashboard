@@ -6,15 +6,13 @@ from datetime import date
 from datetime import datetime as dt
 
 
-receiver_countries_dd_options = pickle.load(
-    open("./data/receiver_countries_dd.pickle", "rb")
-)
-
-initiator_country_dd_options = pickle.load(
-    open("./data/initiator_country_dd.pickle", "rb")
-)
+# Reading in the dropdown menu options
+receiver_countries_dd_options = pickle.load(open("./data/receiver_countries_dd.pickle", "rb"))
+initiator_country_dd_options = pickle.load(open("./data/initiator_country_dd.pickle", "rb"))
 initiator_country_dd_options[2]["label"] = "Africa (region)"
 
+
+# Popovers
 incident_type_popover = dbc.Popover(
     "Depicts the cyber incident(s) type concerning the reported consequences for the target(s): \
     Data theft, data theft with doxing, disruption, hijacking without misuse, and hijacking with misuse.",
@@ -22,6 +20,7 @@ incident_type_popover = dbc.Popover(
     body=True,
     trigger="hover",
 )
+
 
 initiator_country_popover = dbc.Popover(
     "Describes a) the country of origin of the attributed initiating actor and b) the categorization \
@@ -34,6 +33,7 @@ initiator_country_popover = dbc.Popover(
     trigger="hover",
 )
 
+
 receiver_country_popover = dbc.Popover(
     "Describes a) the country of origin of the targeted entities and b) the respective actor \
     categorization. The term “country“ – as applied to the selection list – comprises states, \
@@ -44,6 +44,8 @@ receiver_country_popover = dbc.Popover(
     trigger="hover",
 )
 
+
+# Sidebar body
 def generate_sidebar():
     sidebar = dbc.Card([
         dbc.CardBody([

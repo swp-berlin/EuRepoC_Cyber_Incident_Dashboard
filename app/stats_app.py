@@ -151,14 +151,15 @@ tab_change_callback(app)
     Input(component_id='incident_type_dd', component_property='value'),
     Input(component_id='date-picker-range', component_property='start_date'),
     Input(component_id='date-picker-range', component_property='end_date'),
-    Input(component_id='interval-component', component_property='n_intervals'),
+    #Input(component_id='interval-component', component_property='n_intervals'),
 )
 def update_plot(input_receiver_country,
                 input_initiator_country,
                 input_incident_type,
                 start_date_start,
                 start_date_end,
-                n):
+                #n
+                ):
 
     if input_initiator_country == "All countries":
         input_initiator_country = None

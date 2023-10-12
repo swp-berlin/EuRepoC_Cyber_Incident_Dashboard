@@ -1,11 +1,9 @@
 from dash import html
 from dash.dependencies import Input, Output, State
 import pandas as pd
-from datetime import datetime
 import numpy as np
 import plotly.subplots as sp
 import plotly.graph_objs as go
-from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
 
@@ -48,34 +46,32 @@ def responses_title_callback(app):
         if incident_type == "All":
             incident_type = None
 
-        if incident_type:
-            type = incident_type
-        else:
-            type = "Cyber"
+        if incident_type is None:
+            incident_type = "Cyber"
 
         if active_tab == "response_number_tab":
             if receiver_country != "Global (states)" and initiator_country:
-                return html.P(html.B(f"{type.capitalize()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
+                return html.P(html.B(f"{incident_type.capitalize()} incidents from {initiator_country} against {receiver_country} with political or legal responses \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country == "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+                return html.P(html.B(f"{incident_type.capitalize()} incidents with political or legal responses between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"{type.capitalize()} incidents with political or legal responses from initiators based in {initiator_country} \
+                return html.P(html.B(f"{incident_type.capitalize()} incidents with political or legal responses from initiators based in {initiator_country} \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country != "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"{type.capitalize()} incidents against {receiver_country} with political or legal responses \
+                return html.P(html.B(f"{incident_type.capitalize()} incidents against {receiver_country} with political or legal responses \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
         else:
             if receiver_country != "Global (states)" and initiator_country:
-                return html.P(html.B(f"Type of responses for {type.lower()} incidents from {initiator_country} against {receiver_country} \
+                return html.P(html.B(f"Type of responses for {incident_type.lower()} incidents from {initiator_country} against {receiver_country} \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country == "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Type of responses for {type.lower()} incidents between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
+                return html.P(html.B(f"Type of responses for {incident_type.lower()} incidents between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"Type of responses for {type.lower()} incidents from initiators based in {initiator_country} \
+                return html.P(html.B(f"Type of responses for {incident_type.lower()} incidents from initiators based in {initiator_country} \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
             elif receiver_country != "Global (states)" and initiator_country is None:
-                return html.P(html.B(f"Type of responses for {type.lower()} incidents against {receiver_country} \
+                return html.P(html.B(f"Type of responses for {incident_type.lower()} incidents against {receiver_country} \
                 between {start_date} and {end_date} [only incidents coded since Sep. 2022]"))
 
 
