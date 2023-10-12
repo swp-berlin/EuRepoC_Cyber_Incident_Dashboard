@@ -8,7 +8,7 @@ attributions_card_tabs = dbc.Row([
         dbc.Tabs(
             [
                 dbc.Tab(label="Attribution speed", tab_id="timeline_tab"),
-                dbc.Tab(label="Attribution types", tab_id="types_tab"),
+                dbc.Tab(label="Attribution bases", tab_id="types_tab"),
             ],
             id="attributions-card-tabs",
             active_tab="timeline_tab",

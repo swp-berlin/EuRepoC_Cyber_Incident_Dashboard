@@ -121,7 +121,7 @@ def generate_sidebar():
                 children=[
                     html.Label([
                         html.Span([
-                            html.B('Initiator country '),
+                            html.B('Origin country of initiator '),
                             html.I(
                                 id="initiator_country_dd_info",
                                 className="fa-regular fa-circle-question",

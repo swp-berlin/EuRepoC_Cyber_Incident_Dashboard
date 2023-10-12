@@ -26,7 +26,7 @@ responses_types_tab = dbc.Row([
                                 html.Span("Stabilising measures", style={"font-weight": "bold"}),
                                 html.Span(" are statements made by ministers, heads of states, or subnational executives."),
                                 html.Span(" Preventive measures", style={"font-weight": "bold"}),
-                                html.Span(" include awarness raising, capacity building in third-countries and security building dialogues."),
+                                html.Span(" include awareness raising, capacity building in third-countries and security building dialogues."),
                                 html.Span(" Legislative reactions", style={"font-weight": "bold"}),
                                 html.Span(" include, legislative initiatives, parliamentary investigation committees, \
                                 and dissenting or stabilising statements by members of parliament."),
