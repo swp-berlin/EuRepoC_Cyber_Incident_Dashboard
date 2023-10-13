@@ -1,15 +1,40 @@
-from dash import dcc, html
+from dash import dcc
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
-    generate_text_with_popover_icon, generate_incident_details_modal
+from layout.layout_functions import (
+    CONFIG, generate_intensity_popover,
+    generate_text_with_popover_icon, generate_incident_details_modal,
+    generate_key_insights_layout, generate_datatable_details_layout
+)
 
 
-modal_attributions = generate_incident_details_modal(modal_body_id="modal_attributions_content", modal_id="modal_attributions")
+modal_attributions = generate_incident_details_modal(
+    modal_body_id="modal_attributions_content",
+    modal_id="modal_attributions"
+)
 
 
 mean_intensity_attributions_popover = generate_intensity_popover(target_id="mean_intensity_attributions_info")
 mean_intensity_attributions_popover_icon = generate_text_with_popover_icon(
     text="Mean intensity", span_id="mean_intensity_attributions_info", popover=mean_intensity_attributions_popover)
+
+
+attribution_speed_key_insights_layout = generate_key_insights_layout(
+    nb_incidents_id="nb_incidents_attributions",
+    average_intensity_id="average_intensity_attributions",
+    mean_intensity_popover_icon=mean_intensity_attributions_popover_icon,
+    description_text_id="attributions_description_text",
+    selected_item_id="attributions_selected",
+    clear_click_data_id="clear_attributions_click_data",
+)
+
+
+attribution_speed_details_datatable_layout = generate_datatable_details_layout(
+    datatable_id="attributions_datatable",
+    column_name="number_of_attributions",
+    column_label="Number of attributions",
+    modal_layout=modal_attributions,
+)
+
 
 attributions_tab_speed = dbc.Row([
         dbc.Row([
@@ -22,102 +47,7 @@ attributions_tab_speed = dbc.Row([
                     style={'height': '450px'}
                 )
             ], sm=12, xs=12, md=12, lg=9, xl=9, xxl=9),
-            dbc.Col([
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-explosion",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
-                                    html.B(id="nb_incidents_attributions",
-                                           style={'display': 'inline-block', 'margin-left': '5px'}),
-                                ]),
-                                html.P("Total incidents"),
-                            ], style={'padding': '5px 0px 0px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'}),
-                    ], width=6),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-gauge",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}
-                                    ),
-                                    html.B(
-                                        id="average_intensity_attributions",
-                                        style={'display': 'inline-block', 'margin-left': '5px'}
-                                    ),
-                                ]),
-                                mean_intensity_attributions_popover_icon,
-                            ], style={'padding': '5px 0px 15px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'})
-                    ], width=6),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader([
-                                html.P([
-                                    html.I(
-                                        className="fa-solid fa-magnifying-glass-chart",
-                                        style={"color": "#CC0130", "font-size": "22px"}
-                                    ),
-                                    html.B("  Key insight")
-                                ]),
-                            ], style={"display": "flex", "align-items": "center"}),
-                            dbc.CardBody([
-                                html.Div(id="attributions_description_text"),
-                            ]),
-                        ]),
-                    ], style={"margin-top": "20px"}),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        html.Div(id="attributions_selected",
-                                 style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
-                    ], style={"margin-top": "20px", "align": "center"}),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Button(
-                            "Clear graph selection",
-                            id="clear_attributions_click_data",
-                            n_clicks=0,
-                            color="light",
-                            size="sm",
-                            style={'margin-bottom': '12px'}
-                        )
-                    ], style={"text-align": "center"})
-                ])
-            ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center",
+            *attribution_speed_key_insights_layout,
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.P(
-                    "Details on incidents",
-                    style={"font-weight": "bold", "font-size": "1rem"}
-                ),
-            ]),
-        ], style={"margin-top": "25px", "margin-bottom": "5px"}),
-        dbc.Row([
-            dbc.Col([
-                create_table("attributions_datatable", "number_of_attributions", "Number of attributions"),
-                modal_attributions,
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.P([
-                    html.I(
-                        className="fa-solid fa-arrow-pointer",
-                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
-                    ),
-                    " Click on a row in the table above to display all information about the incident",
-                ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
-                )
-            ]),
-        ], style={"margin-top": "1px"}),
+        *attribution_speed_details_datatable_layout,
 ])

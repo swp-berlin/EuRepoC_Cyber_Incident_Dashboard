@@ -233,6 +233,10 @@ def generate_datatable_details_layout(
         datatable_id=None,
         column_name=None,
         column_label=None,
+        column_name_2=None,
+        column_label_2=None,
+        column_name_3=None,
+        column_label_3=None,
         modal_layout=None,
 ):
     datatable_layout = [
@@ -249,6 +253,10 @@ def generate_datatable_details_layout(
                     table_id=datatable_id,
                     column_name=column_name,
                     column_label=column_label,
+                    column_name_2=column_name_2,
+                    column_label_2=column_label_2,
+                    column_name_3=column_name_3,
+                    column_label_3=column_label_3,
                 ),
                 modal_layout,
             ]),
@@ -271,12 +279,37 @@ def generate_datatable_details_layout(
 
 def generate_key_insights_layout(
         nb_incidents_id=None,
-        average_intensity_id= None,
+        average_intensity_id=None,
         mean_intensity_popover_icon=None,
         description_text_id=None,
         selected_item_id=None,
         clear_click_data_id=None,
+        response_tab=False
 ):
+    if response_tab is False:
+        selection_rows = [
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id=selected_item_id,
+                             style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
+                ], style={"margin-top": "20px", "align": "center"}),
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Button(
+                        "Clear graph selection",
+                        id=clear_click_data_id,
+                        n_clicks=0,
+                        color="light",
+                        size="sm",
+                        style={'margin-bottom': '12px'}
+                    )
+                ], style={"text-align": "center"}),
+            ])
+        ]
+    else:
+        selection_rows = []
+
     key_insight_layout = [
         dbc.Col([
             dbc.Row([
@@ -330,24 +363,7 @@ def generate_key_insights_layout(
                     ]),
                 ], style={"margin-top": "20px"})
             ]),
-            dbc.Row([
-                dbc.Col([
-                    html.Div(id=selected_item_id,
-                             style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
-                ], style={"margin-top": "20px", "align": "center"}),
-            ]),
-            dbc.Row([
-                dbc.Col([
-                    dbc.Button(
-                        "Clear graph selection",
-                        id=clear_click_data_id,
-                        n_clicks=0,
-                        color="light",
-                        size="sm",
-                        style={'margin-bottom': '12px'}
-                    )
-                ], style={"text-align": "center"}),
-            ]),
+            *selection_rows,
         ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3)
     ]
     return key_insight_layout

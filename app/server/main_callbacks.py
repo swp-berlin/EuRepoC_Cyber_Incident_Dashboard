@@ -89,6 +89,7 @@ def change_attributions_tab(app):
         else:
             return attributions_tab_types
 
+
 def change_responses_tab(app):
     @app.callback(
         Output("responses-card-content", "children"),

@@ -1,7 +1,10 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
-    generate_text_with_popover_icon, generate_incident_details_modal
+from layout.layout_functions import (
+    CONFIG, generate_intensity_popover,
+    generate_text_with_popover_icon, generate_incident_details_modal,
+    generate_key_insights_layout, generate_datatable_details_layout
+)
 
 
 modal_responses = generate_incident_details_modal(modal_body_id="modal_responses_content", modal_id="modal_responses")
@@ -11,7 +14,27 @@ mean_intensity_responses_popover = generate_intensity_popover(target_id="mean_in
 mean_intensity_responses_popover_icon = generate_text_with_popover_icon(
     text="Mean intensity", span_id="mean_intensity_responses_info", popover=mean_intensity_responses_popover)
 
-#How many cyber incidents are met with a political or legal response?
+
+responses_key_insights_layout = generate_key_insights_layout(
+    nb_incidents_id="nb_incidents_responses",
+    average_intensity_id="average_intensity_responses",
+    mean_intensity_popover_icon=mean_intensity_responses_popover_icon,
+    description_text_id="responses_description_text",
+    response_tab=True
+)
+
+
+responses_details_datatable_layout = generate_datatable_details_layout(
+    datatable_id="responses_datatable",
+    column_name="number_of_political_responses",
+    column_label="Number of political responses",
+    column_name_2="number_of_legal_responses",
+    column_label_2="Number of legal responses",
+    column_name_3="weighted_cyber_intensity",
+    column_label_3="Weighted cyber intensity",
+    modal_layout=modal_responses,
+)
+
 
 responses_nb_tab = dbc.Row([
         dbc.Row([
@@ -36,7 +59,9 @@ responses_nb_tab = dbc.Row([
                 ]),
                 dbc.Row([
                     dbc.Col([
-                        html.Div(html.B("Percentage of incidents with a political or legal response by intensity score"), style={"font-size": "1rem"}),
+                        html.Div(
+                            html.B("Percentage of incidents with a political or legal response by intensity score"),
+                            style={"font-size": "1rem"}),
                         dcc.Graph(
                             id="responses_graph_2",
                             config={
@@ -48,90 +73,7 @@ responses_nb_tab = dbc.Row([
                     ], sm=12, xs=12, lg=12, xl=12, xxl=12, md=12),
                 ]),
             ], sm=12, xs=12, md=12, lg=9, xl=9, xxl=9),
-            dbc.Col([
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-explosion",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
-                                    html.B(id="nb_incidents_responses",
-                                           style={'display': 'inline-block', 'margin-left': '5px'}),
-                                ]),
-                                html.P("Total incidents"),
-                            ], style={'padding': '5px 0px 0px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'}),
-                    ], width=6),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-gauge",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}
-                                    ),
-                                    html.B(
-                                        id="average_intensity_responses",
-                                        style={'display': 'inline-block', 'margin-left': '5px'}
-                                    ),
-                                ]),
-                                mean_intensity_responses_popover_icon,
-                            ], style={'padding': '5px 0px 15px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'})
-                    ], width=6),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader([
-                                html.P([
-                                    html.I(
-                                        className="fa-solid fa-magnifying-glass-chart",
-                                        style={"color": "#CC0130", "font-size": "22px"}
-                                    ),
-                                    html.B("  Key insight")
-                                ]),
-                            ], style={"display": "flex", "align-items": "center"}),
-                            dbc.CardBody([
-                                html.Div(id="responses_description_text"),
-                            ]),
-                        ])
-                    ], style={'margin-top': '20px'}),
-                ]),
-            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
+            *responses_key_insights_layout,
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.P(["Details on incidents with responses"], style={"font-weight": "bold", "font-size": "1rem"}),
-            ])
-        ], style={"margin-top": "22px", "margin-bottom": "5px", "display": "flex", "align-items": "center"}),
-        dbc.Row([
-            dbc.Col([
-                create_table(
-                    "responses_datatable",
-                    "number_of_political_responses",
-                    "Number of political responses",
-                    "number_of_legal_responses",
-                    "Number of legal responses",
-                    "weighted_cyber_intensity",
-                    "Weighted cyber intensity",
-                ),
-                modal_responses,
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.P([
-                    html.I(
-                        className="fa-solid fa-arrow-pointer",
-                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
-                    ),
-                    " Click on a row in the table above to display all information about the incident",
-                ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
-                )
-            ]),
-        ], style={"margin-top": "1px"}),
+        *responses_details_datatable_layout,
 ])
-

@@ -7,7 +7,7 @@ responses_card_tabs = dbc.Row([
         dbc.Tabs(
             [
                 dbc.Tab(label="Number of responses", tab_id="response_number_tab"),
-                dbc.Tab(label="Type of responses", tab_id="reponse_types_tab"),
+                dbc.Tab(label="Type of responses", tab_id="response_types_tab"),
             ],
             id="responses-card-tabs",
             active_tab="response_number_tab",
