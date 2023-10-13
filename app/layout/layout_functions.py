@@ -267,3 +267,87 @@ def generate_datatable_details_layout(
         ], style={"margin-top": "1px"})
     ]
     return datatable_layout
+
+
+def generate_key_insights_layout(
+        nb_incidents_id=None,
+        average_intensity_id= None,
+        mean_intensity_popover_icon=None,
+        description_text_id=None,
+        selected_item_id=None,
+        clear_click_data_id=None,
+):
+    key_insight_layout = [
+        dbc.Col([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.Div([
+                                html.I(
+                                    className="fa-solid fa-explosion",
+                                    style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
+                                html.B(id=nb_incidents_id,
+                                       style={'display': 'inline-block', 'margin-left': '5px'}),
+                            ]),
+                            html.P("Total incidents"),
+                        ], style={'padding': '5px 0px 0px 5px'}),
+                    ], style={'padding': '0px', 'margin-top': '0px'}),
+                ], width=6),
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardBody([
+                            html.Div([
+                                html.I(
+                                    className="fa-solid fa-gauge",
+                                    style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}
+                                ),
+                                html.B(
+                                    id=average_intensity_id,
+                                    style={'display': 'inline-block', 'margin-left': '5px'}
+                                ),
+                            ]),
+                            mean_intensity_popover_icon,
+                        ], style={'padding': '5px 0px 15px 5px'}),
+                    ], style={'padding': '0px', 'margin-top': '0px'})
+                ], width=6),
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Card([
+                        dbc.CardHeader([
+                            html.P([
+                                html.I(
+                                    className="fa-solid fa-magnifying-glass-chart",
+                                    style={"color": "#CC0130", "font-size": "22px"}
+                                ),
+                                html.B("  Key insight")
+                            ]),
+                        ], style={"display": "flex", "align-items": "center"}),
+                        dbc.CardBody([
+                            html.Div(id=description_text_id),
+                        ]),
+                    ]),
+                ], style={"margin-top": "20px"})
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.Div(id=selected_item_id,
+                             style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
+                ], style={"margin-top": "20px", "align": "center"}),
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Button(
+                        "Clear graph selection",
+                        id=clear_click_data_id,
+                        n_clicks=0,
+                        color="light",
+                        size="sm",
+                        style={'margin-bottom': '12px'}
+                    )
+                ], style={"text-align": "center"}),
+            ]),
+        ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3)
+    ]
+    return key_insight_layout

@@ -1,15 +1,21 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
-    generate_text_with_popover_icon, generate_incident_details_modal
+from layout.layout_functions import (
+    create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon,
+    generate_incident_details_modal, generate_datatable_details_layout
+)
 
 
-modal_initiators = generate_incident_details_modal(modal_body_id="modal_initiators_content", modal_id="modal_initiators")
+modal_initiators = generate_incident_details_modal(
+    modal_body_id="modal_initiators_content",
+    modal_id="modal_initiators"
+)
 
 
 mean_intensity_initiators_popover = generate_intensity_popover(target_id="mean_intensity_initiators_info")
 mean_intensity_initiators_popover_icon = generate_text_with_popover_icon(
     text="Mean intensity", span_id="mean_intensity_initiators_info", popover=mean_intensity_initiators_popover)
+
 
 threat_groups_popover = dbc.Popover([
         dbc.PopoverBody([
@@ -20,6 +26,15 @@ threat_groups_popover = dbc.Popover([
 
 threat_groups_popover_icon = generate_text_with_popover_icon(
     text="Threat groups", span_id="threat_groups_info", popover=threat_groups_popover)
+
+
+initiators_details_datatable_layout = generate_datatable_details_layout(
+    datatable_id="initiators_datatable",
+    column_name="incident_type",
+    column_label="Incident type",
+    modal_layout=modal_initiators,
+)
+
 
 initiators_tab = dbc.Container(
     dbc.Row([
@@ -98,7 +113,10 @@ initiators_tab = dbc.Container(
                                     html.I(
                                         className="fa-solid fa-user-secret",
                                         style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
-                                        html.B(id="nb_threat_groups_initiators", style={'display': 'inline-block', 'margin-left': '5px'}),
+                                    html.B(
+                                        id="nb_threat_groups_initiators",
+                                        style={'display': 'inline-block', 'margin-left': '5px'}
+                                    ),
                                 ]),
                                 threat_groups_popover_icon,
                             ], style={'padding': '5px 0px 15px 5px'}),
@@ -141,35 +159,8 @@ initiators_tab = dbc.Container(
                         )
                     ], style={"text-align": "center"}),
                 ]),
-            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
+            ], style={'margin-top': '20px'}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3),
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.P(["Details on incidents"], style={"font-weight": "bold", "font-size": "1rem"}),
-            ])
-        ], style={"margin-top": "22px", "margin-bottom": "5px", "display": "flex", "align-items": "center"}),
-        dbc.Row([
-            dbc.Col([
-                create_table(
-                    "initiators_datatable",
-                    "incident_type",
-                    "Incident type",
-                ),
-                modal_initiators,
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.P([
-                    html.I(
-                        className="fa-solid fa-arrow-pointer",
-                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
-                    ),
-                    " Click on a row in the table above to display all information about the incident",
-                ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
-                )
-            ]),
-        ], style={"margin-top": "1px"}),
+        *initiators_details_datatable_layout,
     ])
 )
-

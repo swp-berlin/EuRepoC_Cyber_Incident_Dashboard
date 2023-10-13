@@ -1,7 +1,10 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
-from layout.layout_functions import create_table, CONFIG, generate_intensity_popover, \
-    generate_text_with_popover_icon, generate_incident_details_modal
+from layout.layout_functions import (
+    create_table, CONFIG, generate_intensity_popover,
+    generate_text_with_popover_icon, generate_incident_details_modal, generate_key_insights_layout,
+    generate_datatable_details_layout,
+)
 
 
 modal_types = generate_incident_details_modal(modal_body_id="modal_types_content", modal_id="modal_types")
@@ -32,16 +35,17 @@ disruption_popover = dbc.Popover(
 )
 
 hijacking_with_misuse_popover = dbc.Popover(
-    "Incidents where the attacker penetrates or takes over the attacked system(s), gaining deeper administrative rights, \
-     and some abuse of these rights has been observed - e.g. data theft and/or disruption.",
+    "Incidents where the attacker penetrates or takes over the attacked system(s), \
+    gaining deeper administrative rights, and some abuse of these rights has been observed \
+    - e.g. data theft and/or disruption.",
     target="hijacking_misuse_info",
     body=True,
     trigger="hover",
 )
 
 hijacking_without_misuse_popover = dbc.Popover(
-    "Incidents where the attacker penetrates or takes over the attacked system(s), gaining deeper administrative rights, \
-     but no obvious abuse of these rights has been observed so far.",
+    "Incidents where the attacker penetrates or takes over the attacked system(s), \
+    gaining deeper administrative rights, but no obvious abuse of these rights has been observed so far.",
     target="hijacking_without_misuse_info",
     body=True,
     trigger="hover",
@@ -58,6 +62,25 @@ ransomware_popover = dbc.Popover(
 mean_intensity_types_popover = generate_intensity_popover(target_id="mean_intensity_types_info")
 mean_intensity_types_popover_icon = generate_text_with_popover_icon(
     text="Mean intensity", span_id="mean_intensity_types_info", popover=mean_intensity_types_popover)
+
+
+types_key_insights = generate_key_insights_layout(
+    nb_incidents_id="nb_incidents_types",
+    average_intensity_id="average_intensity_types",
+    mean_intensity_popover_icon=mean_intensity_types_popover_icon,
+    description_text_id="types_description_text",
+    selected_item_id="types_selected",
+    clear_click_data_id="clear_types_click_data",
+)
+
+
+types_incident_details_table = generate_datatable_details_layout(
+    datatable_id="types_datatable",
+    column_name="weighted_cyber_intensity",
+    column_label="Weighted cyber intensity",
+    modal_layout=modal_types,
+)
+
 
 types_tab = dbc.Container(
     dbc.Row([
@@ -95,16 +118,16 @@ types_tab = dbc.Container(
                                         }
                                     ),
                                     " Data theft",
-                                        html.I(
-                                            id="data_theft_info",
-                                            className="fa-regular fa-circle-question",
-                                            style={
-                                                'text-align': 'center',
-                                                'font-size': '12px',
-                                                'color': '#002C38',
-                                                'right': '-14px', 'top': '-2px',
-                                                'position': 'absolute'
-                                            }
+                                    html.I(
+                                        id="data_theft_info",
+                                        className="fa-regular fa-circle-question",
+                                        style={
+                                            'text-align': 'center',
+                                            'font-size': '12px',
+                                            'color': '#002C38',
+                                            'right': '-14px', 'top': '-2px',
+                                            'position': 'absolute'
+                                        }
                                     ),
                                     data_theft_popover
                                 ], className="position-relative"),
@@ -245,103 +268,8 @@ types_tab = dbc.Container(
                     ], style={"padding-left": "50px"}),
                 ], style={'margin-top': '15px'}),
             ], sm=12, xs=12, md=12, lg=9, xl=9, xxl=9),
-            dbc.Col([
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-explosion",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}),
-                                    html.B(id="nb_incidents_types",
-                                           style={'display': 'inline-block', 'margin-left': '5px'}),
-                                ]),
-                                html.P("Total incidents"),
-                            ], style={'padding': '5px 0px 0px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'}),
-                    ], width=6),
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardBody([
-                                html.Div([
-                                    html.I(
-                                        className="fa-solid fa-gauge",
-                                        style={'font-size': '22px', 'color': '#CC0130', 'display': 'inline-block'}
-                                    ),
-                                    html.B(
-                                        id="average_intensity_types",
-                                        style={'display': 'inline-block', 'margin-left': '5px'}
-                                    ),
-                                ]),
-                                mean_intensity_types_popover_icon,
-                            ], style={'padding': '5px 0px 15px 5px'}),
-                        ], style={'padding': '0px', 'margin-top': '0px'})
-                    ], width=6),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Card([
-                            dbc.CardHeader([
-                                html.P([
-                                    html.I(
-                                        className="fa-solid fa-magnifying-glass-chart",
-                                        style={"color": "#CC0130", "font-size": "22px"}
-                                    ),
-                                    html.B("  Key insight")
-                                ]),
-                            ], style={"display": "flex", "align-items": "center"}),
-                            dbc.CardBody([
-                                html.Div(id="types_description_text"),
-                            ]),
-                        ]),
-                    ], style={"margin-top": "20px"})
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        html.Div(id="types_selected",
-                                 style={"font-size": "1rem", 'color': '#CC0130', 'text-align': 'center'}),
-                    ], style={"margin-top": "20px", "align": "center"}),
-                ]),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Button(
-                            "Clear graph selection",
-                            id="clear_types_click_data",
-                            n_clicks=0,
-                            color="light",
-                            size="sm",
-                            style={'margin-bottom': '12px'}
-                        )
-                    ], style={"text-align": "center"}),
-                ]),
-            ], style={"margin-top": "20px"}, sm=12, xs=12, md=12, lg=3, xl=3, xxl=3), #align="center"
+            *types_key_insights,
         ]),
-        dbc.Row([
-            dbc.Col([
-                html.P(
-                    "Details on incidents",
-                    style={"font-weight": "bold", "font-size": "1rem"}
-                ),
-            ])
-        ], style={"margin-top": "25px", "margin-bottom": "5px"}),
-        dbc.Row([
-            dbc.Col([
-                create_table("types_datatable", "weighted_cyber_intensity", "Weighted cyber intensity"),
-                modal_types,
-            ]),
-        ]),
-        dbc.Row([
-            dbc.Col([
-                html.P([
-                    html.I(
-                        className="fa-solid fa-arrow-pointer",
-                        style={'text-align': 'center', 'font-size': '15px', 'color': '#cc0130'},
-                    ),
-                    " Click on a row in the table above to display all information about the incident",
-                    ], style={"font-style": "italic", "font-size": "1rem", "color": "#CC0130", "text-align": "center"}
-                )
-            ]),
-        ], style={"margin-top": "1px"}),
+        *types_incident_details_table
     ])
 )
