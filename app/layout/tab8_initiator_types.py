@@ -1,7 +1,7 @@
 from dash import dcc, html
 import dash_bootstrap_components as dbc
 from layout.layout_functions import (
-    create_table, CONFIG, generate_intensity_popover, generate_text_with_popover_icon,
+    CONFIG, generate_intensity_popover, generate_text_with_popover_icon,
     generate_incident_details_modal, generate_datatable_details_layout
 )
 
