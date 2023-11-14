@@ -8,7 +8,6 @@ from server.server_functions import filter_database_by_output, filter_datatable,
 from server.common_callbacks import create_modal_text
 
 
-## ajouter plusieurs options; pour varié le genre de choses qui peuvent être choisi 
 def responses_question_title(app):
     @app.callback(
         Output("responses_question_title", "children"),
@@ -163,19 +162,20 @@ def responses_graph_callback(app, df=None, states_codes=None):
         responses_grouped_2["percent_legal"] = responses_grouped_2["legal_response"] / responses_grouped_2["ID"]
 
         min_size = 10
-        max_size = 25
-        normalized_size_pol = min_size + (responses_grouped_2['political_response'] - np.min(responses_grouped_2['political_response'])) * \
-                          (max_size - min_size) / (np.max(responses_grouped_2['political_response']) - np.min(responses_grouped_2['political_response']))
+        max_size = 30
+        global_min = min(responses_grouped_2['political_response'].min(), responses_grouped_2['legal_response'].min())
+        global_max = max(responses_grouped_2['political_response'].max(), responses_grouped_2['legal_response'].max())
 
-        normalized_size_leg = min_size + (
-                    responses_grouped_2['legal_response'] - np.min(responses_grouped_2['legal_response'])) * \
-                              (max_size - min_size) / (np.max(responses_grouped_2['legal_response']) - np.min(
-            responses_grouped_2['legal_response']))
+        normalized_size_pol = min_size + (responses_grouped_2['political_response'] - global_min) * \
+                              (max_size - min_size) / (global_max - global_min)
+
+        normalized_size_leg = min_size + (responses_grouped_2['legal_response'] - global_min) * \
+                              (max_size - min_size) / (global_max - global_min)
 
         if all(normalized_size_pol.isna()):
-            normalized_size_pol = 10
+            normalized_size_pol = 8
         if all(normalized_size_leg.isna()):
-            normalized_size_leg = 10
+            normalized_size_leg = 8
 
         total_nb_responses = int(pie_df.loc[1, "total_responses"])
 
@@ -315,8 +315,10 @@ def responses_graph_callback(app, df=None, states_codes=None):
                     color='#002C38'
                 ),
                 text=responses_grouped_2['political_response'],
+                customdata=responses_grouped_2["ID"],
                 hovertemplate='Intensity score: %{x}\
                 <br>Incidents with political response: %{text}\
+                <br>Total incidents with intensity %{x}: %{customdata}\
                 <br>Percentage: %{y:.1%}<extra></extra>',
                 name='Political', mode='markers'))
 
@@ -327,8 +329,10 @@ def responses_graph_callback(app, df=None, states_codes=None):
                     color='#cc0130'
                 ),
                 text=responses_grouped_2['legal_response'],
+                customdata=responses_grouped_2["ID"],
                 hovertemplate='Intensity score: %{x}\
                             <br>Incidents with a legal response: %{text}\
+                            <br>Total incidents with intensity %{x}: %{customdata}\
                             <br>Percentage: %{y:.1%}<extra></extra>',
                 y=responses_grouped_2['percent_legal'],
                 name='Legal', mode='markers'))

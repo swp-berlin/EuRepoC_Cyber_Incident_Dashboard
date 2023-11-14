@@ -6,95 +6,118 @@ import dash_cytoscape as cyto
 import numpy as np
 import pickle
 from layout.main_layout import serve_layout
-from server.tab1_mapview_callbacks import map_callback, map_title_callback, metric_values_callback
 from server.main_callbacks import (
     reset_button_callback, tab_change_callback,
-    change_conflict_dyads_tab, change_attributions_tab, change_responses_tab
+    change_conflict_dyads_tab, change_attributions_tab,
+    change_responses_tab
 )
-from server.common_callbacks import clear_selected_click_data_callback, \
-    clear_active_cell_datatables_callback
-from server.tab1_inclusion_criteria_callbacks import inclusion_criteria_graph_callback
-from server.tab3_timeline_callbacks import timeline_graph_callback, timeline_title_callback, \
-    timeline_datatable_callback, timeline_text_selection_callback
-from server.tab2_network_callbacks import network_title_callback, \
-    network_graph_callback, style_node_onclick_callback, network_text_selection_callback, network_datatable_callback
-from server.tab4_types_callbacks import types_title_callback, types_graph_callback, \
-    types_text_selection_callback, types_datatable_callback
-from server.tab5_sectors_callbacks import sectors_title_callback, sectors_graph_callback, \
-    sectors_text_selection_callback, sectors_datatable_callback
-from server.tab6_attributions_callbacks import attributions_title_callback, attributions_graph_callback, \
-    attributions_datatable_callback, attributions_text_selection_callback, attributions_question_title
-from server.tab7_responses_callbacks import responses_title_callback, responses_graph_callback, responses_datatable_callback, responses_question_title
-from server.tab8_initiators_callbacks import initiators_title_callback, initiators_graph_callback, \
-    initiators_text_selection_callback, initiators_datatable_callback
+from server.common_callbacks import (
+    clear_selected_click_data_callback, clear_active_cell_datatables_callback
+)
 from server.server_functions import filter_datatable
-from server.tab2_network_bar_graph_callbacks import network_bar_graph_callback, network_bar_text_selection_callback, network_bar_datatable_callback
-from server.tab6_attributions_types_callbacks import attributions_graph_callback_types, attributions_datatable_callback_types, attributions_text_selection_callback_types
+from server.tab1_mapview_callbacks import (
+    map_callback, map_title_callback,
+    metric_values_callback
+)
+from server.tab1_inclusion_criteria_callbacks import inclusion_criteria_graph_callback
+from server.tab2_network_callbacks import (
+    network_title_callback, network_graph_callback,
+    style_node_onclick_callback, network_text_selection_callback,
+    network_datatable_callback
+)
+from server.tab2_network_bar_graph_callbacks import (
+    network_bar_graph_callback, network_bar_text_selection_callback,
+    network_bar_datatable_callback
+)
+from server.tab3_timeline_callbacks import (
+    timeline_graph_callback, timeline_title_callback,
+    timeline_datatable_callback, timeline_text_selection_callback
+)
+from server.tab4_types_callbacks import (
+    types_title_callback, types_graph_callback,
+    types_text_selection_callback, types_datatable_callback
+)
+from server.tab5_sectors_callbacks import (
+    sectors_title_callback, sectors_graph_callback,
+    sectors_text_selection_callback, sectors_datatable_callback
+)
+from server.tab6_attributions_callbacks import (
+    attributions_title_callback, attributions_graph_callback,
+    attributions_datatable_callback, attributions_text_selection_callback,
+    attributions_question_title
+)
+from server.tab6_attributions_types_callbacks import (
+    attributions_graph_callback_types, attributions_datatable_callback_types,
+    attributions_text_selection_callback_types
+)
+from server.tab7_responses_callbacks import (
+    responses_title_callback, responses_graph_callback,
+    responses_datatable_callback, responses_question_title
+)
 from server.tab7_responses_type_callbacks import responses_graph_callback_types, responses_datatable_callback_types
+from server.tab8_initiators_callbacks import (
+    initiators_title_callback, initiators_graph_callback,
+    initiators_text_selection_callback, initiators_datatable_callback
+)
 
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
 
-def global_update():
-    global database, full_data_dict, full_data_dict_index_map, map_data, geometry, inclusion_data, network, \
-    timeline_data, types_data, sectors_data, attributions_data, attributions_basis, responses_data, responses_details, \
-    initiators_data
 
-    # TABLES
-    database = pd.read_csv("./data/eurepoc_dataset.csv")
-    database["start_date"] = pd.to_datetime(database["start_date"])
-    database["receiver_region"] = database["receiver_region"].fillna("")
-    database["receiver_country"] = database["receiver_country"].fillna("")
-    database["initiator_country"] = database["initiator_country"].fillna("")
-    full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
-    full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
+# TABLES
+database = pd.read_csv("./data/eurepoc_dataset.csv")
+database["start_date"] = pd.to_datetime(database["start_date"])
+database["receiver_region"] = database["receiver_region"].fillna("")
+database["receiver_country"] = database["receiver_country"].fillna("")
+database["initiator_country"] = database["initiator_country"].fillna("")
+full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
+full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
 
-    # MAP
-    map_data = pd.read_csv("./data/dashboard_map_data.csv")
-    map_data["weighted_cyber_intensity"] = pd.to_numeric(map_data["weighted_cyber_intensity"])
-    map_data["start_date"] = pd.to_datetime(map_data["start_date"])
+# MAP
+map_data = pd.read_csv("./data/dashboard_map_data.csv")
+map_data["weighted_cyber_intensity"] = pd.to_numeric(map_data["weighted_cyber_intensity"])
+map_data["start_date"] = pd.to_datetime(map_data["start_date"])
 
-    # Map geometry
-    geometry = gpd.read_file('./data/geojson.json')
+# Map geometry
+geometry = gpd.read_file('./data/geojson.json')
 
-    # INCLUSION CRITERIA
-    inclusion_data = pd.read_csv("./data/dashboard_inclusion_data.csv")
-    inclusion_data["start_date"] = pd.to_datetime(inclusion_data["start_date"])
-    inclusion_data["receiver_region"] = inclusion_data["receiver_region"].fillna("")
+# INCLUSION CRITERIA
+inclusion_data = pd.read_csv("./data/dashboard_inclusion_data.csv")
+inclusion_data["start_date"] = pd.to_datetime(inclusion_data["start_date"])
+inclusion_data["receiver_region"] = inclusion_data["receiver_region"].fillna("")
 
-    # NETWORK
-    network = pd.read_csv("./data/dashboard_network_data.csv")
-    network["receiver_region"] = network["receiver_region"].fillna("")
+# NETWORK
+network = pd.read_csv("./data/dashboard_network_data.csv")
+network["receiver_region"] = network["receiver_region"].fillna("")
 
-    # TIMELINE
-    timeline_data = pd.read_csv("./data/dashboard_evolution_data.csv")
-    timeline_data["start_date"] = pd.to_datetime(timeline_data["start_date"])
+# TIMELINE
+timeline_data = pd.read_csv("./data/dashboard_evolution_data.csv")
+timeline_data["start_date"] = pd.to_datetime(timeline_data["start_date"])
 
-    # INCIDENT TYPES
-    types_data = pd.read_csv("./data/dashboard_incident_types_data.csv")
-    types_data["start_date"] = pd.to_datetime(types_data["start_date"])
+# INCIDENT TYPES
+types_data = pd.read_csv("./data/dashboard_incident_types_data.csv")
+types_data["start_date"] = pd.to_datetime(types_data["start_date"])
 
-    # TARGETED SECTORS
-    sectors_data = pd.read_csv("./data/dashboard_targeted_sectors_data.csv")
-    sectors_data["start_date"] = pd.to_datetime(sectors_data["start_date"])
-    sectors_data['receiver_category_subcode'] = sectors_data['receiver_category_subcode'].replace(np.nan, "")
+# TARGETED SECTORS
+sectors_data = pd.read_csv("./data/dashboard_targeted_sectors_data.csv")
+sectors_data["start_date"] = pd.to_datetime(sectors_data["start_date"])
+sectors_data['receiver_category_subcode'] = sectors_data['receiver_category_subcode'].replace(np.nan, "")
 
-    # ATTRIBUTIONS
-    attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
-    attributions_basis = pd.read_csv("./data/dashboard_attributions_basis_data.csv")
-    attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
-    attributions_basis["start_date"] = pd.to_datetime(attributions_basis["start_date"])
+# ATTRIBUTIONS
+attributions_data = pd.read_csv("./data/dashboard_attributions_data.csv")
+attributions_basis = pd.read_csv("./data/dashboard_attributions_basis_data.csv")
+attributions_data["start_date"] = pd.to_datetime(attributions_data["start_date"])
+attributions_basis["start_date"] = pd.to_datetime(attributions_basis["start_date"])
 
-    # RESPONSES
-    responses_data = pd.read_csv("./data/dashboard_responses_data.csv")
-    responses_data["start_date"] = pd.to_datetime(responses_data["start_date"])
-    responses_details = pd.read_csv("./data/dashboard_responses_details_data.csv")
-    responses_details["start_date"] = pd.to_datetime(responses_details["start_date"])
+# RESPONSES
+responses_data = pd.read_csv("./data/dashboard_responses_data.csv")
+responses_data["start_date"] = pd.to_datetime(responses_data["start_date"])
+responses_details = pd.read_csv("./data/dashboard_responses_details_data.csv")
+responses_details["start_date"] = pd.to_datetime(responses_details["start_date"])
 
-    # INITIATORS
-    initiators_data = pd.read_csv("./data/dashboard_initiators_data.csv")
-    initiators_data["start_date"] = pd.to_datetime(initiators_data["start_date"])
+# INITIATORS
+initiators_data = pd.read_csv("./data/dashboard_initiators_data.csv")
+initiators_data["start_date"] = pd.to_datetime(initiators_data["start_date"])
 
-global_update()
 
 cyto.load_extra_layouts()
 
@@ -147,6 +170,7 @@ def close_modal(n):
 reset_button_callback(app)
 tab_change_callback(app)
 
+
 @app.callback(
     Output('metric_values', 'data'),
     Input(component_id='receiver_country_dd', component_property='value'),
@@ -154,14 +178,12 @@ tab_change_callback(app)
     Input(component_id='incident_type_dd', component_property='value'),
     Input(component_id='date-picker-range', component_property='start_date'),
     Input(component_id='date-picker-range', component_property='end_date'),
-    #Input(component_id='interval-component', component_property='n_intervals'),
 )
 def update_plot(input_receiver_country,
                 input_initiator_country,
                 input_incident_type,
                 start_date_start,
                 start_date_end,
-                #n
                 ):
 
     if input_initiator_country == "All countries":
@@ -199,6 +221,7 @@ def update_plot(input_receiver_country,
     }
 
     return metric_values
+
 
 # TAB 1
 map_title_callback(app)
