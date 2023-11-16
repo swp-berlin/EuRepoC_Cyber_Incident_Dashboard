@@ -57,7 +57,7 @@ def attributions_title_callback(app):
             elif receiver_country == "Global (states)" and initiator_country is None:
                 return html.P(html.B(f"Average number of months needed to attribute the initiators of {incident_type.lower()} incidents between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"Average number of months needed to attribute initiators of {incident_type.lower()} incidents based in {initiator_country} \
+                return html.P(html.B(f"Average number of months needed to attribute the initiators of {incident_type.lower()} incidents based in {initiator_country} \
                 between {start_date} and {end_date}"))
             elif receiver_country != "Global (states)" and initiator_country is None:
                 return html.P(html.B(f"Average number of months needed to attribute initiators of {incident_type.lower()} incidents against {receiver_country} \
@@ -69,7 +69,7 @@ def attributions_title_callback(app):
             elif receiver_country == "Global (states)" and initiator_country is None:
                 return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents between {start_date} and {end_date}"))
             elif receiver_country == "Global (states)" and initiator_country:
-                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents based in {initiator_country} \
+                return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents initiated by actors based in {initiator_country} \
                 between {start_date} and {end_date}"))
             elif receiver_country != "Global (states)" and initiator_country is None:
                 return html.P(html.B(f"Types of attribution for {incident_type.lower()} incidents against {receiver_country} \
