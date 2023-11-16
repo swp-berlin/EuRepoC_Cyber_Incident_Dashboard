@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
+from datetime import datetime as dt
 from layout.main_layout import serve_layout
 from server.main_callbacks import (
     reset_button_callback, tab_change_callback,
@@ -169,6 +170,22 @@ def close_modal(n):
 
 reset_button_callback(app)
 tab_change_callback(app)
+
+
+@app.callback(
+    Output('note-start-date', 'style'),
+    [Input('date-picker-range', 'start_date'),
+     Input('date-picker-range', 'end_date')]
+)
+def update_note_visibility(start_date, end_date):
+    if start_date == "2000-01-01" and end_date == str(dt.now().date()):
+        start_date = None
+        end_date = None
+
+    if start_date and end_date:
+        return {'font-size': '0.8rem', 'font-style': 'italic', 'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 
 @app.callback(

@@ -198,6 +198,16 @@ def generate_sidebar():
                     ),
                 ]
             ),
+            html.Div(
+                id="note-start-date",
+                children=[
+                    *make_break(1),
+                    html.P(
+                        "Note: incidents for which the start date is unknown are not displayed in the graphs \
+                        or tables when a time period is selected.",
+                    ),
+                ]
+            ),
             html.Div([
                 dbc.Button(
                     "Reset selection",
