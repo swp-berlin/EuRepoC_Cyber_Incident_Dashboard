@@ -472,7 +472,7 @@ clear_selected_click_data_callback(
 
 server = app.server
 app.layout = serve_layout
-
+app.title = "EuRepoC Cyber Incident Dashboard"
 
 if __name__ == '__main__':
     app.run_server(host="0.0.0.0")

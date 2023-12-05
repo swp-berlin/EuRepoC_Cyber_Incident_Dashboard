@@ -114,12 +114,33 @@ def types_graph_callback(app, df=None, states_codes=None):
                     ])
                 ])
 
-            fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
-                             size="bubble_size", size_max=60,
-                             color_discrete_sequence=['#CC0130', '#002C38', '#89BD9E', '#847E89', '#F4B942', "#79443B"],
-                             hover_name="incident_type",
-                             hover_data=["ID", "weighted_cyber_intensity", "incident_type"],
-                             )
+            color_map = {
+                'Data theft': '#CC0130',
+                'Data theft & Doxing': '#002C38',
+                'Disruption': '#89BD9E',
+                'Hijacking with Misuse': '#847E89',
+                'Hijacking without Misuse': '#F4B942',
+                'Ransomware': "#79443B"
+            }
+            print(grouped_data['incident_type'].unique())
+            print(color_map.keys())
+
+            if len(grouped_data['incident_type'].unique()) == 1:
+                unique_incident_type = grouped_data['incident_type'].unique()[0]
+                color = color_map[unique_incident_type]
+                fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
+                                 size="bubble_size", size_max=60,
+                                 color_discrete_sequence=[color],
+                                 hover_name="incident_type",
+                                 hover_data=["ID", "weighted_cyber_intensity", "incident_type"],
+                                 )
+            else:
+                fig = px.scatter(grouped_data, x="ID", y="weighted_cyber_intensity", color="incident_type",
+                                 size="bubble_size", size_max=60,
+                                 color_discrete_map=color_map,
+                                 hover_name="incident_type",
+                                 hover_data=["ID", "weighted_cyber_intensity", "incident_type"],
+                                 )
 
             fig.update_traces(textfont=dict(color='black'),
                               marker=dict(line_width=3))

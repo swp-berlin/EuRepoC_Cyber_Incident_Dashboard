@@ -30,6 +30,7 @@ card_tabs = dbc.Row([
 def serve_layout():
     full_layout = dbc.Container(
         children=[
+            html.Link(rel='icon', href='./assets/eurepoc-logo.png'),
             dbc.Row([
                 dcc.Store(id='metric_values'),
                 dcc.Store(id='nb_threat_groups_data'),
