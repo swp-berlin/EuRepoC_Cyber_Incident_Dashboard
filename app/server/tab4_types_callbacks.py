@@ -122,8 +122,6 @@ def types_graph_callback(app, df=None, states_codes=None):
                 'Hijacking without Misuse': '#F4B942',
                 'Ransomware': "#79443B"
             }
-            print(grouped_data['incident_type'].unique())
-            print(color_map.keys())
 
             if len(grouped_data['incident_type'].unique()) == 1:
                 unique_incident_type = grouped_data['incident_type'].unique()[0]
