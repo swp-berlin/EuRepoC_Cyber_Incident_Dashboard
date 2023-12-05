@@ -4,6 +4,23 @@ from dash import callback_context as ctx
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 import pandas as pd
+from datetime import datetime, timedelta
+
+
+def get_sort_key(date_string):
+    formats = ['%Y-%m-%d', '%Y-%m', '%Y']
+
+    # Handle non-standard date strings
+    if date_string == "Not available":
+        # Return a very old date to ensure these entries are sorted last
+        return datetime.min + timedelta(days=1)
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_string, fmt)
+        except ValueError:
+            pass
+    return None
 
 
 def clear_selected_click_data_callback(app, output_id=None, output_component_property=None, input_id=None):
@@ -110,8 +127,9 @@ def get_receiver_details(receiver_countries):
 def get_attribution_details(
         attributions
 ):
+    sorted_attributions = sorted(attributions, key=lambda x: get_sort_key(x['attribution_full_date'][0]), reverse=True)
     attribution_text = []
-    for i, attribution in enumerate(attributions):
+    for i, attribution in enumerate(sorted_attributions):
         initiators = format_attributed_initiators(attribution['attributed_initiator_name'], attribution['attributed_initiator_country'], attribution['attributed_initiator_category'])
         elements = [
             html.Div([
