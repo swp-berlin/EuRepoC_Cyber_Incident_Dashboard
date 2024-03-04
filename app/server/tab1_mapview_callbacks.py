@@ -234,6 +234,10 @@ def map_callback(app, df=None, geometry=None):
             map_latitude = grouped_gdf.latitude.max()
             map_longitude = grouped_gdf.longitude.max()
             map_zoom = 1
+        elif input_receiver_country == "Norway":
+            map_latitude = 89.48395539690824
+            map_longitude = 23.7894480943595
+            map_zoom = 2
         else:
             map_latitude = grouped_gdf.latitude.max()
             map_longitude = grouped_gdf.longitude.max()
