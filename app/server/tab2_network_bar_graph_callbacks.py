@@ -1,7 +1,7 @@
 from dash import html
 from dash.dependencies import Input, Output, State
 from datetime import datetime as dt
-import plotly.graph_objects as go
+import plotly.express as px
 from dash import callback_context as ctx
 from server.server_functions import filter_database_by_output, filter_datatable, empty_figure
 from server.common_callbacks import create_modal_text
@@ -35,81 +35,96 @@ def network_bar_graph_callback(app, df=None, states_codes=None):
 
         else:
             total = filtered_df["ID"].nunique()
-            filtered_df['initiator_country'] = filtered_df.apply(
-                lambda row: "Unknown"
-                if (row['initiator_country'] == 'Not available' and
-                    (row['initiator_name'] == 'Not available' or row['initiator_name'] == "Unknown"))
-                else row['initiator_country'],
-                axis=1)
-            grouped_df = filtered_df.groupby(['initiator_country'])["ID"].nunique().reset_index().sort_values(by='ID', ascending=True).tail(10)
-            grouped_df['percentage'] = (grouped_df['ID'] / total * 100).round(2)
-            grouped_df['text'] = grouped_df.apply(lambda row: f"{row['ID']} ({row['percentage']}%)",
+            filtered_df["initiator_category"] = filtered_df["initiator_category"].replace("Not available", "Unknown")
+            filtered_df["initiator_category"] = filtered_df["initiator_category"].replace("Unknown - not attributed", "Unknown")
+            filtered_df["initiator_category"] = filtered_df["initiator_category"].replace("Non-state actor, state-affiliation suggested", "State-affiliated actor")
+            filtered_df["initiator_category"] = filtered_df["initiator_category"].replace("State", "State actor")
+
+            df_grouped = filtered_df.groupby(["initiator_country", "initiator_category"]).agg(
+                {"ID": "nunique"}
+            ).reset_index().rename(columns={"ID": "count"})
+            df_total_per_country = filtered_df.groupby("initiator_country").agg(
+                {"ID": "nunique"}
+            ).reset_index().rename(columns={"ID": "total"})
+            df_total_per_country = df_total_per_country.sort_values(by="total", ascending=False).head(10)
+
+            df_total_per_country["percentage"] = (df_total_per_country['total'] / total * 100).round(1)
+            df_total_per_country['text'] = df_total_per_country.apply(lambda row: f"{row['total']}<br><i>{row['percentage']}%</i>",
                                                   axis=1)
 
-            if clickData:
-                selected_initiator = clickData["points"][0]["label"]
+            df_grouped = df_grouped.merge(df_total_per_country, on="initiator_country", how="left")
+            df_grouped = df_grouped.sort_values(by=["total"], ascending=[False]).dropna(subset="total")
+            df_grouped['percentage'] = (df_grouped['total'] / total * 100).round(1)
+            df_grouped['text'] = df_grouped.apply(lambda row: f"{row['total']}<br><i>{row['percentage']}%</i>",
+                                                  axis=1)
 
-                colors = ['#002C38' if x != selected_initiator else '#cc0130' for x in grouped_df['initiator_country']]
+            country_order = df_grouped['initiator_country'].unique()
 
-                fig = go.Figure(data=[go.Bar(
-                    y=grouped_df['initiator_country'],
-                    x=grouped_df['ID'],
-                    text=grouped_df['text'],
-                    orientation='h',
-                    marker=dict(
-                        color=colors,
-                    ),
-                    hovertemplate='%{x} incidents from %{y}<extra></extra>'
-                )])
+            color_map = {
+                "State-affiliated actor": "#6e977e",
+                "Non-state-group": "#cc0130",
+                "Not attributed": "#847e89",
+                "Unknown": "#cecbd0",
+                "Individual hacker(s)": "#e06783",
+                "State actor": "#002C38",
+            }
 
-                fig.update_layout(
-                    xaxis_title="",
-                    yaxis_title="",
-                    xaxis=dict(showticklabels=False),
-                    plot_bgcolor='white',
-                    font=dict(
-                        family="Lato",
-                        color="#002C38",
-                        size=14
-                    ),
-                    margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=600,
-                    dragmode=False
+            fig = px.bar(
+                df_grouped,
+                x='count',
+                y='initiator_country',
+                color='initiator_category',
+                orientation='h',
+                custom_data=['initiator_category'],
+                color_discrete_map=color_map,
+                category_orders={'initiator_country': country_order},
+            )
+
+            fig.update_layout(
+                xaxis_title="",
+                yaxis_title="",
+                legend_title="",
+                plot_bgcolor="white",
+                barmode='stack',
+                xaxis=dict(
+                    showgrid=False,
+                    showline=False,
+                    showticklabels=False,
+                    zeroline=False,
+                ),
+                height=600,
+                font=dict(
+                    family="Lato",
+                    color="#002C38",
+                    size=14
+                ),
+                margin=dict(l=0, r=0, t=45, b=0, pad=0),
+                dragmode=False
+            )
+
+            for i, row in df_total_per_country.iterrows():
+                fig.add_annotation(
+                    x=row['total'],
+                    y=row['initiator_country'],
+                    text=str(row['text']),
+                    showarrow=False,
+                    xshift=37  # Shifts the text to the right
                 )
 
+            if df_grouped.iloc[0]['initiator_country'] == "Not attributed" and input_receiver_country != "Global (states)":
+                main_init = f"Most cyber incidents ({df_grouped.iloc[0]['percentage']}%) against {input_receiver_country} remain unattributed, meaning the initiator is unknown."
+            elif df_grouped.iloc[0]['initiator_country'] == "Not attributed" and input_receiver_country == "Global (states)":
+                main_init = f"Most cyber incidents ({df_grouped.iloc[0]['percentage']}%) remain unattributed, meaning the initiator is unknown."
+            elif df_grouped.iloc[0]['initiator_country'] == "Unknown" and input_receiver_country != "Global (states)":
+                main_init = f"Most cyber incidents ({df_grouped.iloc[0]['percentage']}%) against {input_receiver_country} originate from actors from unknown countries, mainly non-state-groups."
+            elif df_grouped.iloc[0]['initiator_country'] == "Unknown" and input_receiver_country == "Global (states)":
+                main_init = f"Most cyber incidents ({df_grouped.iloc[0]['percentage']}%) originate from actors from unknown countries, mainly non-state-groups."
             else:
-                fig = go.Figure(data=[go.Bar(
-                    y=grouped_df['initiator_country'],
-                    x=grouped_df['ID'],
-                    text=grouped_df['text'],
-                    orientation='h',
-                    marker=dict(
-                        color="#002C38",
-                    ),
-                    hovertemplate='%{x} incidents from %{y}<extra></extra>'
-                )])
-
-                fig.update_layout(
-                    xaxis_title="",
-                    yaxis_title="",
-                    xaxis=dict(showticklabels=False),
-                    plot_bgcolor='white',
-                    font=dict(
-                        family="Lato",
-                        color="#002C38",
-                        size=14
-                    ),
-                    margin=dict(l=0, r=0, t=45, b=0, pad=0),
-                    height=600,
-                    dragmode=False
-                )
-
-            if grouped_df.iloc[-1]['initiator_country'] == "Unknown" and input_receiver_country != "Global (states)":
-                main_init = f"Most cyber incidents ({grouped_df.iloc[-1]['percentage']}%) against {input_receiver_country} remain unattributed, meaning the country of origin is unknown."
-            elif grouped_df.iloc[-1]['initiator_country'] == "Unknown" and input_receiver_country == "Global (states)":
-                main_init = f"Most cyber incidents ({grouped_df.iloc[-1]['percentage']}%) remain unattributed, meaning the country of origin is unknown."
-            else:
-                main_init = f"Most cyber incidents ({grouped_df.iloc[-1]['percentage']}%) against {input_receiver_country} originate from {grouped_df.iloc[-1]['initiator_country']}"
+                if input_receiver_country == "Global (states)":
+                    receiver_country_text = ""
+                else:
+                    receiver_country_text = input_receiver_country
+                main_init = f"Most cyber incidents ({df_grouped.iloc[0]['percentage']}%) against {receiver_country_text} originate from actors based in {df_grouped.iloc[0]['initiator_country']}"
 
             text = html.Div([
                     html.P([
@@ -134,9 +149,22 @@ def network_bar_text_selection_callback(app):
             clickData = None
 
         if clickData:
-            text = html.P([
-                'Initiator country selected: ',
-                html.Span(f'{clickData["points"][0]["label"]}', style={'font-weight': 'bold'})
+            text = html.Div([
+                html.Span([
+                    'Initiator country selected: ', html.Br(),
+                    html.Span(f'{clickData["points"][0]["label"]}', style={'font-weight': 'bold'}),
+                ]),
+                html.Br(),
+                html.Span([
+                    'Initiator category selected: ', html.Br(),
+                    html.Span(f'{clickData["points"][0]["customdata"][0]}', style={'font-weight': 'bold'}),
+                ], style={"padding-top": "10px"}),
+                html.Br(),
+                html.Span([
+                    'Total: ', html.Br(),
+                    html.Span(f'{clickData["points"][0]["x"]}', style={'font-weight': 'bold'})
+                ], style={"padding-top": "10px"}),
+                html.Br(),
             ])
         else:
             text = html.P([

@@ -142,7 +142,9 @@ def filter_datatable(
 
     if initiators_country_clickdata:
         point = initiators_country_clickdata["points"][0]["label"]
+        category = initiators_country_clickdata["points"][0]["customdata"][0]
         filtered_data = filtered_data[filtered_data['initiator_country'].str.contains(point, regex=False)]
+        filtered_data = filtered_data[filtered_data['initiator_category'].str.contains(category, regex=False)]
 
     return filtered_data
 

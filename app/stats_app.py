@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
 import numpy as np
 import pickle
+import re
 from datetime import datetime as dt
 from layout.main_layout import serve_layout
 from server.main_callbacks import (
@@ -64,12 +65,25 @@ from server.tab8_initiators_callbacks import (
 # ------------------------------------------------- READ DATA ---------------------------------------------------------
 
 
+replacements = {
+    r"\bNot available\b": "Unknown",
+    r"\bUnknown - not attributed\b": "Unknown",
+    r"\bState\b": "State actor",
+    r"\bNon-state actor, state-affiliation suggested\b": "State-affiliated actor",
+}
+
+def replace_substrings(text, replacements):
+    for old, new in replacements.items():
+        text = re.sub(old, new, text)
+    return text
+
 # TABLES
 database = pd.read_csv("./data/eurepoc_dataset.csv")
 database["start_date"] = pd.to_datetime(database["start_date"])
 database["receiver_region"] = database["receiver_region"].fillna("")
 database["receiver_country"] = database["receiver_country"].fillna("")
 database["initiator_country"] = database["initiator_country"].fillna("")
+database['initiator_category'] = database['initiator_category'].apply(lambda x: replace_substrings(x, replacements))
 full_data_dict = pickle.load(open("./data/full_data_dict.pickle", "rb"))
 full_data_dict_index_map = pickle.load(open("./data/full_data_dict_index_map.pickle", "rb"))
 
@@ -118,7 +132,10 @@ responses_details["start_date"] = pd.to_datetime(responses_details["start_date"]
 # INITIATORS
 initiators_data = pd.read_csv("./data/dashboard_initiators_data.csv")
 initiators_data["start_date"] = pd.to_datetime(initiators_data["start_date"])
-
+initiators_data["initiator_category"] = initiators_data["initiator_category"].replace("Not available", "Unknown")
+initiators_data["initiator_category"] = initiators_data["initiator_category"].replace("Unknown - not attributed", "Unknown")
+initiators_data["initiator_category"] = initiators_data["initiator_category"].replace("Non-state actor, state-affiliation suggested", "State-affiliated actor")
+initiators_data["initiator_category"] = initiators_data["initiator_category"].replace("State", "State actor")
 
 cyto.load_extra_layouts()
 
